@@ -145,9 +145,53 @@ public class ChessPiece {
         }
         return moves;
     }
-    private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition pos){
-        return null;
+    private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition pos) {
+        //up/down/left/right 2
+        //then check over 1
+        int r = pos.getRow();
+        int c = pos.getColumn();
+        Collection<ChessMove> moves = new ArrayList<>();
+
+        int up = r + 2;
+        int down = r - 2;
+        int left = c - 1;
+        int right = c + 1;
+
+        // UP DOWN
+        if (up <= 8) {
+            if (left >= 1) addKnightMove(board, pos, new ChessPosition(up, left), moves);
+            if (right <= 8) addKnightMove(board, pos, new ChessPosition(up, right), moves);
+        }
+        if (down >= 1) {
+            if (left >= 1) addKnightMove(board, pos, new ChessPosition(down, left), moves);
+            if (right <= 8) addKnightMove(board, pos, new ChessPosition(down, right), moves);
+        }
+
+        // LEFT RIGHT
+        up = r + 1;
+        down = r - 1;
+        left = c - 2;
+        right = c + 2;
+
+        if (left >= 1) {
+            if (up <= 8) addKnightMove(board, pos, new ChessPosition(up, left), moves);
+            if (down >= 1) addKnightMove(board, pos, new ChessPosition(down, left), moves);
+        }
+        if (right <= 8) {
+            if (up <= 8) addKnightMove(board, pos, new ChessPosition(up, right), moves);
+            if (down >= 1) addKnightMove(board, pos, new ChessPosition(down, right), moves);
+        }
+
+        return moves;
     }
+
+    private void addKnightMove(ChessBoard board, ChessPosition start, ChessPosition end, Collection<ChessMove> moves) {
+        ChessPiece targetPiece = board.getPiece(end);
+        if (targetPiece == null || targetPiece.getTeamColor() != this.color) {
+            moves.add(new ChessMove(start, end, null));
+        }
+    }
+
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition pos){
         return null;
     }
