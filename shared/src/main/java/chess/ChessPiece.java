@@ -64,7 +64,7 @@ public class ChessPiece {
             case QUEEN -> moves.addAll(queenMoves(board, myPosition));
             case KING -> moves.addAll(kingMoves(board, myPosition));
         }
-        return null;
+        return moves;
 
     }
 
@@ -73,19 +73,77 @@ public class ChessPiece {
     }
     //slides so we iterate till end of board col and row
     private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition pos){
-//        int r = pos.getRow();
-//        int c = pos.getRow();
-//        int check = 0;
-//        //0, check left
-//        //1, check right
-//        //2, check up
-//        //3, check down
-//        while(check < 4){
-//            if(check == 0){
-//                if(r <
-//            }
-//        }
-        return null;
+        int r = pos.getRow();
+        int c = pos.getColumn();
+        Collection<ChessMove> moves = new ArrayList<>();
+        //go  right
+        for(int i = c + 1; i <= 8; i++){
+            ChessPosition right = new ChessPosition(r, i);
+            //if nothing there add
+            if (board.getPiece(right) == null){
+                ChessMove move = new ChessMove(pos, right, null);
+                moves.add(move);
+            }
+            //if can capture add and break
+            else if (board.getPiece(right).color != this.color) {
+                ChessMove move = new ChessMove(pos, right, null);
+                moves.add(move);
+                break;
+            }
+            //if our own piece break
+            else{
+                break;
+            }
+        }
+        //go left
+        for(int i = c-1; i >= 1; i--){
+            ChessPosition left = new ChessPosition(r, i);
+            if(board.getPiece(left) == null){
+                ChessMove move = new ChessMove(pos, left, null);
+                moves.add(move);
+            }
+            else if (board.getPiece(left).color != this.color) {
+                ChessMove move = new ChessMove(pos, left, null);
+                moves.add(move);
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        // go up
+        for(int i = r+1; i <= 8; i++){
+            ChessPosition up = new ChessPosition(i, c);
+            if(board.getPiece(up) == null){
+                ChessMove move = new ChessMove(pos, up, null);
+                moves.add(move);
+            }
+            else if (board.getPiece(up).color != this.color) {
+                ChessMove move = new ChessMove(pos, up, null);
+                moves.add(move);
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        //go down
+        for(int i = r - 1; i >= 1; i--){
+            ChessPosition down = new ChessPosition(i, c);
+            if(board.getPiece(down) == null){
+                ChessMove move = new ChessMove(pos, down, null);
+                moves.add(move);
+            }
+            else if (board.getPiece(down).color != this.color) {
+                ChessMove move = new ChessMove(pos, down, null);
+                moves.add(move);
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        return moves;
     }
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition pos){
         return null;
