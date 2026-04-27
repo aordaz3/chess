@@ -303,7 +303,70 @@ public class ChessPiece {
         return moves;
     }
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition pos){
-        return null;
+        int r = pos.getRow();
+        int c = pos.getColumn();
+        Collection<ChessMove> moves = new ArrayList<>();
+        int up = r + 1;
+        int down = r - 1;
+        int left = c - 1;
+        int right = c+ 1;
+        //up
+        if(up <= 8){
+            ChessPosition overOne = new ChessPosition(up, c);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //down
+        if(down >= 1){
+            ChessPosition overOne = new ChessPosition(down, c);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //left
+        if(left >= 1){
+            ChessPosition overOne = new ChessPosition(r, left);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //right
+        if(right <= 8){
+            ChessPosition overOne = new ChessPosition(r, right);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //up left
+        if(left >= 1 && up <= 8){
+            ChessPosition overOne = new ChessPosition(up, left);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //up right
+        if(right <=8 && up <= 8){
+            ChessPosition overOne = new ChessPosition(up, right);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //down left
+        if(left >= 1 && down >= 1){
+            ChessPosition overOne = new ChessPosition(down, left);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        //down right
+        if(right <= 8 && down >= 1){
+            ChessPosition overOne = new ChessPosition(down, right);
+            if (board.getPiece(overOne) == null || board.getPiece(overOne).color != this.color) {
+                moves.add(new ChessMove(pos, overOne, null));
+            }
+        }
+        return moves;
     }
 
 
