@@ -291,8 +291,16 @@ public class ChessPiece {
         }
         return moves;
     }
+
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition pos){
-        return null;
+        Collection<ChessMove> bishopMoves = new ArrayList<>();
+        Collection<ChessMove> rookMoves = new ArrayList<>();
+        Collection<ChessMove> moves = new ArrayList<>();
+        bishopMoves = bishopMoves(board, pos);
+        rookMoves = rookMoves(board, pos);
+        moves.addAll(bishopMoves);
+        moves.addAll(rookMoves);
+        return moves;
     }
     private Collection<ChessMove> kingMoves(ChessBoard board, ChessPosition pos){
         return null;
