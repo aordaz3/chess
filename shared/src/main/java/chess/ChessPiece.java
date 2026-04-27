@@ -145,6 +145,7 @@ public class ChessPiece {
         }
         return moves;
     }
+
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition pos) {
         //up/down/left/right 2
         //then check over 1
@@ -193,7 +194,102 @@ public class ChessPiece {
     }
 
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition pos){
-        return null;
+        int r = pos.getRow();
+        int c = pos.getColumn();
+        Collection<ChessMove> moves = new ArrayList<>();
+        //move left up
+        int left = c - 1;
+        int up = r + 1;
+        while(left>=1 && up <=8) {
+            ChessPosition leftUp = new ChessPosition(up, left);
+            //nithing there
+            if (board.getPiece(leftUp) == null){
+                ChessMove move = new ChessMove(pos, leftUp, null);
+                moves.add(move);
+            }
+            //mean guy there
+            else if (board.getPiece(leftUp).color != this.color) {
+                ChessMove move = new ChessMove(pos, leftUp, null);
+                moves.add(move);
+                break;
+            }
+            //friend there
+            else{
+                break;
+            }
+            left--;
+            up++;
+        }
+        //move right up
+        int right = c + 1;
+        up = r + 1;
+        while(right <= 8 && up <= 8) {
+            ChessPosition rightUp = new ChessPosition(up, right);
+            //nithing there
+            if (board.getPiece(rightUp) == null){
+                ChessMove move = new ChessMove(pos, rightUp, null);
+                moves.add(move);
+            }
+            //mean guy there
+            else if (board.getPiece(rightUp).color != this.color) {
+                ChessMove move = new ChessMove(pos, rightUp, null);
+                moves.add(move);
+                break;
+            }
+            //friend there
+            else{
+                break;
+            }
+            right++;
+            up++;
+        }
+        //move left down
+        left = c - 1;
+        int down = r - 1;
+        while(left>=1 && down >= 1) {
+            ChessPosition leftDown = new ChessPosition(down, left);
+            //nithing there
+            if (board.getPiece(leftDown) == null){
+                ChessMove move = new ChessMove(pos, leftDown, null);
+                moves.add(move);
+            }
+            //mean guy there
+            else if (board.getPiece(leftDown).color != this.color) {
+                ChessMove move = new ChessMove(pos, leftDown, null);
+                moves.add(move);
+                break;
+            }
+            //friend there
+            else{
+                break;
+            }
+            left--;
+            down--;
+        }
+        //move right down
+        right = c + 1;
+        down = r - 1;
+        while(right <=8  && down >=1) {
+            ChessPosition rightDown = new ChessPosition(down, right);
+            //nithing there
+            if (board.getPiece(rightDown) == null){
+                ChessMove move = new ChessMove(pos, rightDown, null);
+                moves.add(move);
+            }
+            //mean guy there
+            else if (board.getPiece(rightDown).color != this.color) {
+                ChessMove move = new ChessMove(pos, rightDown, null);
+                moves.add(move);
+                break;
+            }
+            //friend there
+            else{
+                break;
+            }
+            right++;
+            down --;
+        }
+        return moves;
     }
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition pos){
         return null;
