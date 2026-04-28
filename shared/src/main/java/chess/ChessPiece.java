@@ -167,7 +167,6 @@ public class ChessPiece {
         return moves;
     }
 
-    // Simple helper to add the 4 promo types so you don't have to type it 4 times
     private void addPromotionMoves(Collection<ChessMove> moves, ChessPosition from, ChessPosition to) {
         moves.add(new ChessMove(from, to, ChessPiece.PieceType.QUEEN));
         moves.add(new ChessMove(from, to, ChessPiece.PieceType.ROOK));
