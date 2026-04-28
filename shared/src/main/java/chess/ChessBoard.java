@@ -1,10 +1,9 @@
 package chess;
 
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.ArrayList;
+import java.util.Arrays;
 
-public class ChessBoard{
+public class ChessBoard {
     private ChessPiece[][] board;
 
     @Override
@@ -24,19 +23,18 @@ public class ChessBoard{
     public ChessBoard(){
         this.board = new ChessPiece[8][8];
     }
-
-    public void addPiece(ChessPosition pos, ChessPiece piece){
-        int r = pos.getRow();
-        int c = pos.getColumn();
-
-        this.board[r-1][c-1] = piece;
-    }
-
     public ChessPiece getPiece(ChessPosition pos){
         int r = pos.getRow();
         int c = pos.getColumn();
 
         return board[r-1][c-1];
+    }
+
+    public void addPiece(ChessPosition pos, ChessPiece p){
+        int r = pos.getRow();
+        int c = pos.getColumn();
+
+        this.board[r-1][c-1] = p;
     }
 
     public void resetBoard(){
@@ -45,10 +43,11 @@ public class ChessBoard{
         ChessPiece.PieceType[] backRow = {
                 ChessPiece.PieceType.ROOK, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.BISHOP,
                 ChessPiece.PieceType.QUEEN, ChessPiece.PieceType.KING,
-                ChessPiece.PieceType.BISHOP, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK,
+                ChessPiece.PieceType.BISHOP, ChessPiece.PieceType.KNIGHT, ChessPiece.PieceType.ROOK
         };
+
         for(int i = 1; i<=8; i++){
-            //Pawns
+            //pawns
             addPiece(new ChessPosition(2, i), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
             addPiece(new ChessPosition(7, i), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
 
@@ -57,5 +56,4 @@ public class ChessBoard{
             addPiece(new ChessPosition(8, i), new ChessPiece(ChessGame.TeamColor.BLACK, backRow[i-1]));
         }
     }
-
 }
