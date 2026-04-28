@@ -67,10 +67,114 @@ public class ChessPiece {
         return moves;
 
     }
+    //move straight by one, forward if white, down if black
+    //move up 2 only on first turn
+    //empacant?
+    //promotion?
+    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition pos) {
+        int r = pos.getRow();
+        int c = pos.getColumn();
+        Collection<ChessMove> moves = new ArrayList<>();
 
-    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition pos){
-        return null;
+        if (this.color == ChessGame.TeamColor.WHITE) {
+            int upOne = r + 1;
+            int upTwo = r + 2;
+
+            // Move forward one
+            if (upOne <= 8) {
+                ChessPosition posOne = new ChessPosition(upOne, c);
+                if (board.getPiece(posOne) == null) {
+                    // If it hits the end, add all 4 promotions
+                    if (upOne == 8) {
+                        addPromotionMoves(moves, pos, posOne);
+                    }
+                    else {
+                        moves.add(new ChessMove(pos, posOne, null));
+                    }
+
+                    // Move forward two (only if on start row and nothing is blocking)
+                    if (r == 2) {
+                        ChessPosition posTwo = new ChessPosition(upTwo, c);
+                        if (board.getPiece(posTwo) == null) {
+                            moves.add(new ChessMove(pos, posTwo, null));
+                        }
+                    }
+                }
+            }
+            // White Eats
+            // Left
+            if (c > 1) {
+                ChessPosition leftTarget = new ChessPosition(upOne, c - 1);
+                ChessPiece piece = board.getPiece(leftTarget);
+                if (piece != null && piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                    if (upOne == 8) addPromotionMoves(moves, pos, leftTarget);
+                    else moves.add(new ChessMove(pos, leftTarget, null));
+                }
+            }
+            // Right
+            if (c < 8) {
+                ChessPosition rightTarget = new ChessPosition(upOne, c + 1);
+                ChessPiece piece = board.getPiece(rightTarget);
+                if (piece != null && piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                    if (upOne == 8) addPromotionMoves(moves, pos, rightTarget);
+                    else moves.add(new ChessMove(pos, rightTarget, null));
+                }
+            }
+        }
+        //BLACK
+        else {
+            int downOne = r - 1;
+            int downTwo = r - 2;
+
+            // Move forward one
+            if (downOne >= 1) {
+                ChessPosition posOne = new ChessPosition(downOne, c);
+                if (board.getPiece(posOne) == null) {
+                    if (downOne == 1) {
+                        addPromotionMoves(moves, pos, posOne);
+                    } else {
+                        moves.add(new ChessMove(pos, posOne, null));
+                    }
+
+                    // Move forward two
+                    if (r == 7) {
+                        ChessPosition posTwo = new ChessPosition(downTwo, c);
+                        if (board.getPiece(posTwo) == null) {
+                            moves.add(new ChessMove(pos, posTwo, null));
+                        }
+                    }
+                }
+            }
+            // Left
+            if (c > 1) {
+                ChessPosition leftTarget = new ChessPosition(downOne, c - 1);
+                ChessPiece piece = board.getPiece(leftTarget);
+                if (piece != null && piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                    if (downOne == 1) addPromotionMoves(moves, pos, leftTarget);
+                    else moves.add(new ChessMove(pos, leftTarget, null));
+                }
+            }
+            // Right
+            if (c < 8) {
+                ChessPosition rightTarget = new ChessPosition(downOne, c + 1);
+                ChessPiece piece = board.getPiece(rightTarget);
+                if (piece != null && piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                    if (downOne == 1) addPromotionMoves(moves, pos, rightTarget);
+                    else moves.add(new ChessMove(pos, rightTarget, null));
+                }
+            }
+        }
+        return moves;
     }
+
+    // Simple helper to add the 4 promo types so you don't have to type it 4 times
+    private void addPromotionMoves(Collection<ChessMove> moves, ChessPosition from, ChessPosition to) {
+        moves.add(new ChessMove(from, to, ChessPiece.PieceType.QUEEN));
+        moves.add(new ChessMove(from, to, ChessPiece.PieceType.ROOK));
+        moves.add(new ChessMove(from, to, ChessPiece.PieceType.BISHOP));
+        moves.add(new ChessMove(from, to, ChessPiece.PieceType.KNIGHT));
+    }
+
     //slides so we iterate till end of board col and row
     private Collection<ChessMove> rookMoves(ChessBoard board, ChessPosition pos){
         int r = pos.getRow();
@@ -145,7 +249,6 @@ public class ChessPiece {
         }
         return moves;
     }
-
     private Collection<ChessMove> knightMoves(ChessBoard board, ChessPosition pos) {
         //up/down/left/right 2
         //then check over 1
@@ -185,14 +288,12 @@ public class ChessPiece {
 
         return moves;
     }
-
     private void addKnightMove(ChessBoard board, ChessPosition start, ChessPosition end, Collection<ChessMove> moves) {
         ChessPiece targetPiece = board.getPiece(end);
         if (targetPiece == null || targetPiece.getTeamColor() != this.color) {
             moves.add(new ChessMove(start, end, null));
         }
     }
-
     private Collection<ChessMove> bishopMoves(ChessBoard board, ChessPosition pos){
         int r = pos.getRow();
         int c = pos.getColumn();
@@ -291,7 +392,6 @@ public class ChessPiece {
         }
         return moves;
     }
-
     private Collection<ChessMove> queenMoves(ChessBoard board, ChessPosition pos){
         Collection<ChessMove> bishopMoves = new ArrayList<>();
         Collection<ChessMove> rookMoves = new ArrayList<>();
