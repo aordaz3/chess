@@ -2,8 +2,8 @@ package chess;
 
 import java.util.Objects;
 
-public class ChessPosition{
-    private int row, col;
+public class ChessPosition {
+    private int row, column;
 
     @Override
     public boolean equals(Object o) {
@@ -11,17 +11,17 @@ public class ChessPosition{
             return false;
         }
         ChessPosition that = (ChessPosition) o;
-        return row == that.row && col == that.col;
+        return row == that.row && column == that.column;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(row, col);
+        return Objects.hash(row, column);
     }
 
-    public ChessPosition(int row, int col){
+    public ChessPosition(int row, int column){
         this.row = row;
-        this.col = col;
+        this.column = column;
     }
 
     public int getRow() {
@@ -29,7 +29,7 @@ public class ChessPosition{
     }
 
     public int getColumn() {
-        return col;
+        return column;
     }
 
 }
