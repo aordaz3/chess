@@ -56,4 +56,5 @@ public class ChessBoard {
             addPiece(new ChessPosition(8, i), new ChessPiece(ChessGame.TeamColor.BLACK, backrow[i-1]));
         }
     }
+
 }
