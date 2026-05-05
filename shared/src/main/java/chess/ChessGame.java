@@ -2,6 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * A class that can manage a chess game, making moves on a board
@@ -12,14 +13,12 @@ import java.util.Collection;
 public class ChessGame {
     private TeamColor teamTurn;
     private ChessBoard board;
-    private ChessPosition blackKing;
-    private ChessPosition whiteKing;
+
+
 
     public ChessGame() {
         teamTurn = TeamColor.WHITE;
         board = new ChessBoard();
-        blackKing = new ChessPosition(8, 5);
-        whiteKing = new ChessPosition(1, 5);
     }
 
     /**
@@ -110,15 +109,9 @@ public class ChessGame {
 
         //if we passed execute move
         if (move.getPromotionPiece() != null) {
-            moving = new ChessPiece(this.teamTurn, move.getPromotionPiece());
+            moving = new ChessPiece(moving.getTeamColor(), move.getPromotionPiece());
         }
-        if (moving.getPieceType() == ChessPiece.PieceType.KING){
-            if (moving.getTeamColor() == TeamColor.WHITE) {
-                whiteKing = end;
-            } else {
-                blackKing = end;
-            }
-        }
+
         board.addPiece(end, moving);
         board.addPiece(start, null);
         this.teamTurn = (this.teamTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
@@ -131,7 +124,10 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPosition kingPos = (teamColor == TeamColor.WHITE) ? whiteKing : blackKing;
+        ChessPosition kingPos = findKing(teamColor);
+        if(kingPos == null){
+            return false;
+        }
         TeamColor enemy = (teamColor == TeamColor.WHITE)? TeamColor.BLACK : TeamColor.WHITE;
         //get all moves from opent see if they can land on king
         for (int r = 1; r <= 8; r++) {
@@ -155,11 +151,11 @@ public class ChessGame {
         return false;
     }
 
-    private ChessPosition getKingPos(TeamColor teamColor) {
+    private ChessPosition findKing(TeamColor teamColor) {
         for(int r = 1; r <= 8; r++){
             for(int c = 1; c <= 8; c++){
                 ChessPiece cur = board.getPiece(new ChessPosition(r, c));
-                if(cur.getTeamColor() == this.teamTurn && cur.getPieceType() == ChessPiece.PieceType.KING){
+                if(cur !=null && cur.getTeamColor() == teamColor && cur.getPieceType() == ChessPiece.PieceType.KING){
                     return new ChessPosition(r, c);
                 }
             }
