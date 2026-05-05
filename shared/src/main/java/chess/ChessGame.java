@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -54,10 +55,36 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece moving = board.getPiece(startPosition);
-        if(moving == null || this.isInCheck(moving.getTeamColor()))
-            return null;
         Collection<ChessMove> allMoves = moving.pieceMoves(board, startPosition);
-        return allMoves;
+        if(moving == null)
+            return new ArrayList<>();
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        for(ChessMove move : allMoves){
+            if(moveIsValid(move)){
+                validMoves.add(move);
+            }
+        }
+        return validMoves;
+    }
+
+    private boolean moveIsValid(ChessMove move){
+        ChessPosition start = move.getStartPosition();
+        ChessPosition end = move.getEndPosition();
+        ChessPiece moving = board.getPiece(start);
+        ChessPiece target = board.getPiece(end);
+        TeamColor team = moving.getTeamColor();
+
+        //test move
+        board.addPiece(end, moving);
+        board.addPiece(start, null);
+
+        boolean bad = isInCheck(team);
+
+        board.addPiece(start, moving);
+        board.addPiece(end, target);
+
+        return !bad;
     }
 
     /**
@@ -104,7 +131,7 @@ public class ChessGame {
      */
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPos = (teamColor == TeamColor.WHITE) ? whiteKing : blackKing;
-        TeamColor enemy = (teamColor == TeamColor.WHITE)? TeamColor.BLACK : TeamColor.WHITE
+        TeamColor enemy = (teamColor == TeamColor.WHITE)? TeamColor.BLACK : TeamColor.WHITE;
         //get all moves from opent see if they can land on king
         for (int r = 1; r <= 8; r++) {
             for (int c = 1; c <= 8; c++) {
@@ -161,7 +188,11 @@ public class ChessGame {
      */
     public boolean isInStalemate(TeamColor teamColor) {
         //if is not in check and vailid moves == null return true
-        return false;
+        Collection<ChessMove> whiteKingMoves = validMoves(whiteKing);
+        Collection<ChessMove> blackKingMoves = validMoves(blackKing);
+        return !(isInCheck(TeamColor.WHITE)) && !(isInCheck(TeamColor.BLACK))
+                && whiteKingMoves == null && blackKingMoves == null;
+
     }
 
     /**
