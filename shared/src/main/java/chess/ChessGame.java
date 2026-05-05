@@ -59,7 +59,6 @@ public class ChessGame {
             return new ArrayList<>();
 
         Collection<ChessMove> allMoves = moving.pieceMoves(board, startPosition);
-
         Collection<ChessMove> validMoves = new ArrayList<>();
 
         for(ChessMove move : allMoves){
@@ -176,7 +175,7 @@ public class ChessGame {
                 //if our current square is on our team find its moves
                 if(onSqaure != null && onSqaure.getTeamColor() == team){
                     //if we have moves left
-                    if(validMoves(cur).isEmpty()){
+                    if(!(validMoves(cur).isEmpty())){
                         return false;
                     }
                 }
