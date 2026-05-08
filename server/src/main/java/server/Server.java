@@ -1,21 +1,16 @@
 package server;
 
-import chess.ChessGame;
-import io.javalin.*;
-
-import javax.naming.Context;
-import java.util.zip.CheckedInputStream;
+import io.javalin.Javalin;
+import handler.UserHandler;
 
 public class Server {
 
     private final Javalin javalin;
+    private final UserHandler userHandler = new UserHandler();
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
-
-        // Register your endpoints and exception handlers here.
-        //javalin.post("/user", context -> register(context));
-
+        javalin.post("/user", ctx -> userHandler.register(ctx));
     }
 
 
@@ -27,4 +22,6 @@ public class Server {
     public void stop() {
         javalin.stop();
     }
+
+    private record ErrorResponse(String message) {}
 }
