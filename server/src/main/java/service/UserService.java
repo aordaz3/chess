@@ -1,20 +1,30 @@
 package service;
 
+import dataaccess.UserDAO;
 import model.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class UserService {
+    private final UserDAO DAO = new UserDAO();
 
     public RegisterResult register(RegisterRequest request) {
-        // validate input, check duplicates, create user, generate token
-        return new RegisterResult(request.username(), "authtoken");
+
+        model.UserData user = DAO.getUser(request.username());
+        if(user != null)
+            throw new IllegalArgumentException("already taken");
+        else{
+            UserData newUser = new UserData(request.username(), request.password(), request.email());
+            DAO.createUser(newUser);
+        }
+        String authToken = java.util.UUID.randomUUID().toString();
+        return new RegisterResult(request.username(), authToken);
     }
 
     public LoginResult login(LoginRequest request) {
-        //ADD LOGIC
-        return new LoginResult(request.username(), request.password());
+
+        return new LoginResult(request.username(), "authtoken");
     }
 
     public void logout(String authToken) {
