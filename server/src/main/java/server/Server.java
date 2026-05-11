@@ -15,7 +15,7 @@ public class Server {
         javalin.delete("/session", ctx -> userHandler.logout(ctx));
         javalin.get("/game", ctx -> userHandler.listGames(ctx));
         javalin.post("/game", ctx -> userHandler.createGame(ctx));
-//        javalin.put("/game", ctx -> userHandler.joinGame(ctx));
+        javalin.put("/game", ctx -> userHandler.joinGame(ctx));
 //        javalin.delete("/db", ctx -> userHandler.clear(ctx));
 
     }

@@ -34,4 +34,9 @@ public class UserService {
         return new CreateGameResult("000");
     }
 
+    public void joinGame(JoinGameRequest request){
+        //ADD LOGIC
+        return;
+    }
+
 }

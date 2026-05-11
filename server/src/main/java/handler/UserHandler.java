@@ -82,6 +82,19 @@ public class UserHandler {
         }
     }
 
+    public void joinGame(Context ctx){
+        try{
+            JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
+            userService.joinGame(request);
+            ctx.status(200).result("{}");
+        }
+        catch (IllegalArgumentException e) {
+            ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
+        }
+        catch (Exception e) {
+            ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
+        }
+    }
 
     private record ErrorResponse(String message) {}
 }
