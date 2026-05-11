@@ -2,6 +2,9 @@ package service;
 
 import model.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 public class UserService {
 
     public RegisterResult register(RegisterRequest request) {
@@ -19,6 +22,16 @@ public class UserService {
             throw new IllegalArgumentException("unauthorized");
         }
         // remove token from auth DAO
+    }
+
+    public Collection<GameData> listGames(String authToken){
+        //ADD LOGIC
+        return new ArrayList<>();
+    }
+
+    public CreateGameResult createGame(CreateGameRequest request){
+        //ADD LOGIC
+        return new CreateGameResult("000");
     }
 
 }
