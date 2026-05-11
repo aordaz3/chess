@@ -1,5 +1,6 @@
 package service;
 
+import dataaccess.AuthDAO;
 import dataaccess.UserDAO;
 import model.*;
 
@@ -7,24 +8,41 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class UserService {
-    private final UserDAO DAO = new UserDAO();
-
+    private final UserDAO userDAO = new UserDAO();
+    private final AuthDAO authDAO = new AuthDAO();
     public RegisterResult register(RegisterRequest request) {
+        if (request.username() == null || request.password() == null || request.email() == null)
+            throw new IllegalArgumentException("bad request");
 
-        model.UserData user = DAO.getUser(request.username());
+        model.UserData user = userDAO.getUser(request.username());
+
         if(user != null)
-            throw new IllegalArgumentException("already taken");
+            throw new IllegalArgumentException("unauthorized");
         else{
             UserData newUser = new UserData(request.username(), request.password(), request.email());
-            DAO.createUser(newUser);
+            userDAO.createUser(newUser);
         }
         String authToken = java.util.UUID.randomUUID().toString();
+        AuthData authData = new AuthData(authToken, request.username());
+        authDAO.createAuth(authData);
+
         return new RegisterResult(request.username(), authToken);
     }
 
     public LoginResult login(LoginRequest request) {
+        if (request.username() == null || request.password() == null)
+            throw new IllegalArgumentException("bad request");
 
-        return new LoginResult(request.username(), "authtoken");
+        UserData user = userDAO.getUser(request.username());
+
+        if(user == null || !user.password().equals(request.password()))
+            throw new IllegalArgumentException("unauthorized");
+
+        String authToken = java.util.UUID.randomUUID().toString();
+        AuthData authData = new AuthData(authToken, request.username());
+        authDAO.createAuth(authData);
+
+        return new LoginResult(request.username(), authToken);
     }
 
     public void logout(String authToken) {
