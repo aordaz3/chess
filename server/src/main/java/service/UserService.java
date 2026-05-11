@@ -38,5 +38,8 @@ public class UserService {
         //ADD LOGIC
         return;
     }
+    public void clear(){
+        //DELETE EVERYTHING IN THE DB
+    }
 
 }

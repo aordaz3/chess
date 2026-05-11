@@ -96,5 +96,15 @@ public class UserHandler {
         }
     }
 
+    public void clear(Context ctx){
+        try {
+            userService.clear();
+            ctx.status(200).result("{}");
+        }
+        catch (Exception e){
+            ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+
     private record ErrorResponse(String message) {}
 }
