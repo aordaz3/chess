@@ -12,7 +12,7 @@ public class Server {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
         javalin.post("/user", ctx -> userHandler.register(ctx));
         javalin.post("/session", ctx -> userHandler.login(ctx));
-//        javalin.delete("/session", ctx -> userHandler.logout(ctx));
+        javalin.delete("/session", ctx -> userHandler.logout(ctx));
 //        javalin.get("/game", ctx -> userHandler.listGames(ctx));
 //        javalin.post("/game", ctx -> userHandler.createGame(ctx));
 //        javalin.put("/game", ctx -> userHandler.joinGame(ctx));

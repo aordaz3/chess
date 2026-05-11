@@ -14,9 +14,11 @@ public class UserService {
         return new LoginResult(request.username(), request.password());
     }
 
-    public LogoutResult logout(UserData request) {
-        //ADD LOGIC
-        return new LogoutResult("authtoken");
+    public void logout(String authToken) {
+        if (authToken == null) {
+            throw new IllegalArgumentException("unauthorized");
+        }
+        // remove token from auth DAO
     }
 
 }

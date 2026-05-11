@@ -39,27 +39,13 @@ public class UserHandler {
     }
 
     public void logout(Context ctx) {
-        try{
-            UserData request = ctx.bodyAsClass(UserData.class);
-            LogoutResult result = userService.logout(request);
-            ctx.status(200).json(result);
+        try {
+            String authToken = ctx.header("authorization");
+            userService.logout(authToken);
+            ctx.status(200).result("{}");
         }
-        catch (IllegalArgumentException e){
-            ctx.status(400).json(new ErrorResponse("Error: bad request"));
-        }
-        catch (Exception e) {
-            ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
-        }
-    }
-
-    public void listGames(Context ctx) {
-        try{
-            UserData request = ctx.bodyAsClass(UserData.class);
-            LogoutResult result = userService.logout(request);
-            ctx.status(200).json(result);
-        }
-        catch (IllegalArgumentException e){
-            ctx.status(400).json(new ErrorResponse("Error: bad request"));
+        catch (IllegalArgumentException e) {
+            ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
         }
         catch (Exception e) {
             ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
