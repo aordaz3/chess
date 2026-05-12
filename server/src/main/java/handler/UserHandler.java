@@ -90,8 +90,9 @@ public class UserHandler {
 
     public void joinGame(Context ctx){
         try{
+            String authToken = ctx.header("authorization");
             JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
-            userService.joinGame(request);
+            userService.joinGame(authToken, request);
             ctx.status(200).result("{}");
         }
         catch (IllegalArgumentException e) {

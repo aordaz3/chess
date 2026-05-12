@@ -91,9 +91,34 @@ public class UserService {
         return new CreateGameResult(gameID);
     }
 
-    public void joinGame(JoinGameRequest request){
+    public void joinGame(String authToken, JoinGameRequest request){
         //ADD LOGIC
-        return;
+        if(authToken == null || request == null || request.gameID() < 0 || request.playerColor() == null){
+            throw new IllegalArgumentException("bad request");
+        }
+
+        AuthData userAuthData = authDAO.getAuth(authToken);
+        if(userAuthData == null){
+            throw new IllegalArgumentException("unauthorized");
+        }
+        GameData targetGame = gameDAO.getGame(request.gameID());
+        //check to see if we can join game
+        if(targetGame == null || targetGame.game() == null || (targetGame.blackUsername() != null && targetGame.whiteUsername() != null)){
+            throw new IllegalArgumentException("bad request");
+        }
+        if(request.playerColor().equals("WHITE") && targetGame.whiteUsername() == null){
+            GameData updateWhite = new GameData(request.gameID(), userAuthData.username(), targetGame.blackUsername(),
+                    targetGame.gameName(),targetGame.game());
+            gameDAO.updateGame(updateWhite);
+        }
+        else if(request.playerColor().equals("BLACK") && targetGame.blackUsername() == null){
+            GameData updatedBlack = new GameData(request.gameID(), targetGame.whiteUsername(), userAuthData.username(),
+                    targetGame.gameName(), targetGame.game());
+            gameDAO.updateGame(updatedBlack);
+        }
+        else{
+            throw new IllegalArgumentException("already taken");
+        }
     }
     public void clear(){
         //DELETE EVERYTHING IN THE DB

@@ -8,10 +8,10 @@ import java.util.HashMap;
 public class GameDAO {
     private final HashMap<Integer, GameData> games = new HashMap<>();
 
-    public void createGame(Integer gameID, GameData gameInfo){
+    public void createGame(int gameID, GameData gameInfo){
         games.put(gameID, gameInfo);
     }
-    public GameData getGame(Integer gameID){
+    public GameData getGame(int gameID){
         return games.get(gameID);
     }
     public Collection<GameData> listGames(){
