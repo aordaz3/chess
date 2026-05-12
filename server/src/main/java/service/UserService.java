@@ -106,22 +106,29 @@ public class UserService {
         if(targetGame == null || targetGame.game() == null || (targetGame.blackUsername() != null && targetGame.whiteUsername() != null)){
             throw new IllegalArgumentException("bad request");
         }
-        if(request.playerColor().equals("WHITE") && targetGame.whiteUsername() == null){
+        if (request.playerColor().equals("WHITE")) {
+            if (targetGame.whiteUsername() != null) {
+                throw new IllegalArgumentException("already taken");
+            }
             GameData updateWhite = new GameData(request.gameID(), userAuthData.username(), targetGame.blackUsername(),
-                    targetGame.gameName(),targetGame.game());
+                                                targetGame.gameName(),targetGame.game());
             gameDAO.updateGame(updateWhite);
         }
-        else if(request.playerColor().equals("BLACK") && targetGame.blackUsername() == null){
+        if (request.playerColor().equals("BLACK")) {
+            if (targetGame.blackUsername() != null) {
+                throw new IllegalArgumentException("already taken");
+            }
             GameData updatedBlack = new GameData(request.gameID(), targetGame.whiteUsername(), userAuthData.username(),
-                    targetGame.gameName(), targetGame.game());
+                                                targetGame.gameName(), targetGame.game());
             gameDAO.updateGame(updatedBlack);
         }
-        else{
-            throw new IllegalArgumentException("already taken");
-        }
+        throw new IllegalArgumentException("bad request");
     }
     public void clear(){
         //DELETE EVERYTHING IN THE DB
+        gameDAO.clear();
+        authDAO.clear();
+        userDAO.clear();
     }
 
 }
