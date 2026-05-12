@@ -1,5 +1,6 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
@@ -7,11 +8,13 @@ import model.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 
 public class UserService {
     private final UserDAO userDAO = new UserDAO();
     private final AuthDAO authDAO = new AuthDAO();
     private final GameDAO gameDAO = new GameDAO();
+    private int nextGameID = 0;
     public RegisterResult register(RegisterRequest request) {
         if (request.username() == null || request.password() == null || request.email() == null)
             throw new IllegalArgumentException("bad request");
@@ -49,7 +52,7 @@ public class UserService {
 
     public void logout(String authToken) {
         if (authToken == null) {
-            throw new IllegalArgumentException("unauthorized");
+            throw new IllegalArgumentException("bad request");
         }
         AuthData userAuthData = authDAO.getAuth(authToken);
         if(userAuthData == null){
@@ -71,9 +74,21 @@ public class UserService {
         return gameDAO.listGames();
     }
 
-    public CreateGameResult createGame(CreateGameRequest request){
+    public CreateGameResult createGame(String authToken, CreateGameRequest request){
         //ADD LOGIC
-        return new CreateGameResult("000");
+        if(authToken == null || request == null || request.gameName() == null){
+            throw new IllegalArgumentException("bad request");
+        }
+
+        AuthData userAuthData = authDAO.getAuth(authToken);
+        if(userAuthData == null){
+            throw new IllegalArgumentException("unauthorized");
+        }
+        int gameID = nextGameID++;
+        ChessGame game = new ChessGame();
+        GameData gameInfo = new GameData(gameID, null, null, request.gameName(), game);
+        gameDAO.createGame(gameID, gameInfo);
+        return new CreateGameResult(gameID);
     }
 
     public void joinGame(JoinGameRequest request){

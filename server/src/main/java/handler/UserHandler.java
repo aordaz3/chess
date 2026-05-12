@@ -68,14 +68,20 @@ public class UserHandler {
         }
     }
 
-    public void createGame(Context ctx){
-        try{
+    public void createGame(Context ctx) {
+        try {
+            String authToken = ctx.header("authorization");
             CreateGameRequest request = ctx.bodyAsClass(CreateGameRequest.class);
-            CreateGameResult result = userService.createGame(request);
+            CreateGameResult result = userService.createGame(authToken, request);
             ctx.status(200).json(result);
         }
         catch (IllegalArgumentException e) {
-            ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
+            if ("unauthorized".equals(e.getMessage())) {
+                ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
+            }
+            else {
+                ctx.status(400).json(new ErrorResponse("Error: bad request"));
+            }
         }
         catch (Exception e) {
             ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
