@@ -8,7 +8,6 @@ import model.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Random;
 
 public class UserService {
     private final UserDAO userDAO = new UserDAO();
@@ -61,7 +60,7 @@ public class UserService {
         authDAO.deleteAuth(authToken);
     }
 
-    public Collection<GameData> listGames(String authToken){
+    public Collection<GamesSummary> listGames(String authToken){
         //ADD LOGIC
         if(authToken == null){
             throw new IllegalArgumentException("unauthorized");
@@ -70,8 +69,12 @@ public class UserService {
         if(userAuthData == null){
             throw new IllegalArgumentException("unauthorized");
         }
-
-        return gameDAO.listGames();
+        Collection<GameData> unfiltered = gameDAO.listGames();
+        Collection<GamesSummary> filtered = new ArrayList<>();
+        for(GameData gameInfo : unfiltered){
+            filtered.add(new GamesSummary(gameInfo.gameID(), gameInfo.gameName(),gameInfo.whiteUsername(),gameInfo.blackUsername()));
+        }
+        return filtered;
     }
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request){

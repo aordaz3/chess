@@ -1,7 +1,7 @@
 package handler;
 
 import io.javalin.http.Context;
-import model.*;import org.jetbrains.annotations.NotNull;
+import model.*;
 import service.UserService;
 
 import java.util.Collection;
@@ -63,11 +63,11 @@ public class UserHandler {
         }
     }
 
-    public void listGames(Context ctx){
-        try{
+    public void listGames(Context ctx) {
+        try {
             String authToken = ctx.header("authorization");
-            Collection<GameData> games = userService.listGames(authToken);
-            ctx.status(200).json(new ListGamesResult(games));
+            Collection<GamesSummary> games = userService.listGames(authToken);
+            ctx.status(200).json(new ListGamesResponse(games));
         }
         catch (IllegalArgumentException e) {
             ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
@@ -105,7 +105,13 @@ public class UserHandler {
             ctx.status(200).result("{}");
         }
         catch (IllegalArgumentException e) {
-            ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
+            if ("unauthorized".equals(e.getMessage())) {
+                ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
+            } else if ("already taken".equals(e.getMessage())) {
+                ctx.status(403).json(new ErrorResponse("Error: already taken"));
+            } else {
+                ctx.status(400).json(new ErrorResponse("Error: bad request"));
+            }
         }
         catch (Exception e) {
             ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
