@@ -106,13 +106,14 @@ public class UserService {
         if(targetGame == null || targetGame.game() == null || (targetGame.blackUsername() != null && targetGame.whiteUsername() != null)){
             throw new IllegalArgumentException("bad request");
         }
-        if (request.playerColor().equals("WHITE")) {
+        if (request.playerColor().equals("WHITE") || request.playerColor().equals("WHITE/BLACK")) {
             if (targetGame.whiteUsername() != null) {
                 throw new IllegalArgumentException("already taken");
             }
             GameData updateWhite = new GameData(request.gameID(), userAuthData.username(), targetGame.blackUsername(),
                                                 targetGame.gameName(),targetGame.game());
             gameDAO.updateGame(updateWhite);
+            return;
         }
         if (request.playerColor().equals("BLACK")) {
             if (targetGame.blackUsername() != null) {
@@ -121,6 +122,7 @@ public class UserService {
             GameData updatedBlack = new GameData(request.gameID(), targetGame.whiteUsername(), userAuthData.username(),
                                                 targetGame.gameName(), targetGame.game());
             gameDAO.updateGame(updatedBlack);
+            return;
         }
         throw new IllegalArgumentException("bad request");
     }
