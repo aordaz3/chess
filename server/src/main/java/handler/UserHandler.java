@@ -40,7 +40,8 @@ public class UserHandler {
         catch (IllegalArgumentException e) {
             if ("unauthorized".equals(e.getMessage())) {
                 ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
-            } else {
+            }
+            else {
                 ctx.status(400).json(new ErrorResponse("Error: bad request"));
             }
         }
@@ -107,9 +108,11 @@ public class UserHandler {
         catch (IllegalArgumentException e) {
             if ("unauthorized".equals(e.getMessage())) {
                 ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
-            } else if ("already taken".equals(e.getMessage())) {
+            }
+            else if ("already taken".equals(e.getMessage())) {
                 ctx.status(403).json(new ErrorResponse("Error: already taken"));
-            } else {
+            }
+            else {
                 ctx.status(400).json(new ErrorResponse("Error: bad request"));
             }
         }
