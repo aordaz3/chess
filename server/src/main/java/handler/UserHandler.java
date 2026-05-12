@@ -18,7 +18,12 @@ public class UserHandler {
             ctx.status(200).json(result);
         }
         catch (IllegalArgumentException e) {
-            ctx.status(400).json(new ErrorResponse("Error: bad request"));
+            if ("unauthorized".equals(e.getMessage())) {
+                ctx.status(403).json(new ErrorResponse("Error: already taken"));
+            }
+            else {
+                ctx.status(400).json(new ErrorResponse("Error: bad request"));
+            }
         }
         catch (Exception e) {
             ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
