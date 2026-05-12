@@ -37,8 +37,8 @@ public class UserHandler {
             LoginResult result = userService.login(request);
             ctx.status(200).json(result);
         }
-        catch (IllegalArgumentException e) {
-            if ("unauthorized".equals(e.getMessage())) {
+        catch (IllegalArgumentException f) {
+            if ("unauthorized".equals(f.getMessage())) {
                 ctx.status(401).json(new ErrorResponse("Error: unauthorized"));
             }
             else {
