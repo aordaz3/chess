@@ -14,7 +14,7 @@ public class UserService {
     private final UserDAO userDAO = new UserDAO();
     private final AuthDAO authDAO = new AuthDAO();
     private final GameDAO gameDAO = new GameDAO();
-    private int nextGameID = 0;
+    private int nextGameID = 1;
     public RegisterResult register(RegisterRequest request) {
         if (request.username() == null || request.password() == null || request.email() == null)
             throw new IllegalArgumentException("bad request");
@@ -131,6 +131,7 @@ public class UserService {
         gameDAO.clear();
         authDAO.clear();
         userDAO.clear();
+        nextGameID = 1;
     }
 
 }
