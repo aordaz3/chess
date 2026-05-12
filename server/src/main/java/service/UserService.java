@@ -49,7 +49,11 @@ public class UserService {
         if (authToken == null) {
             throw new IllegalArgumentException("unauthorized");
         }
-        // remove token from auth DAO
+        AuthData userAuthData = authDAO.getAuth(authToken);
+        if(userAuthData == null){
+            throw new IllegalArgumentException("unauthorized");
+        }
+        authDAO.deleteAuth(authToken);
     }
 
     public Collection<GameData> listGames(String authToken){
