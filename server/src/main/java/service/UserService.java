@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 import model.*;
 
@@ -10,6 +11,7 @@ import java.util.Collection;
 public class UserService {
     private final UserDAO userDAO = new UserDAO();
     private final AuthDAO authDAO = new AuthDAO();
+    private final GameDAO gameDAO = new GameDAO();
     public RegisterResult register(RegisterRequest request) {
         if (request.username() == null || request.password() == null || request.email() == null)
             throw new IllegalArgumentException("bad request");
@@ -58,7 +60,15 @@ public class UserService {
 
     public Collection<GameData> listGames(String authToken){
         //ADD LOGIC
-        return new ArrayList<>();
+        if(authToken == null){
+            throw new IllegalArgumentException("unauthorized");
+        }
+        AuthData userAuthData = authDAO.getAuth(authToken);
+        if(userAuthData == null){
+            throw new IllegalArgumentException("unauthorized");
+        }
+
+        return gameDAO.listGames();
     }
 
     public CreateGameResult createGame(CreateGameRequest request){
