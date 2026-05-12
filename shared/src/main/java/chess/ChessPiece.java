@@ -130,16 +130,18 @@ public class ChessPiece {
                 if (forwardRow == promotionRow) {
                     promotionMove(moves, start, forwardOne);
                 }
-                else
+                else {
                     moves.add(new ChessMove(start, forwardOne, null));
+                }
 
                 //now lets check if we can move double
                 if(startRow == row){
                     ChessPosition forwardTwo = new ChessPosition(row + (dir * 2), col);
                     ChessPiece target2 = board.getPiece(forwardTwo);
                     //if nothing there we can move up 2
-                    if(target2 == null)
+                    if(target2 == null) {
                         moves.add(new ChessMove(start, forwardTwo, null));
+                    }
                 }
             }
         }
@@ -156,8 +158,9 @@ public class ChessPiece {
                     if(forwardRow == promotionRow){
                         promotionMove(moves,start, diag);
                     }
-                    else
+                    else {
                         moves.add(new ChessMove(start, diag, null));
+                    }
                 }
             }
         }
@@ -173,8 +176,9 @@ public class ChessPiece {
                 row = row + dir[0];
                 col = col + dir[1];
 
-                if(row < 1 || row > 8 || col < 1 || col >8)
+                if(row < 1 || row > 8 || col < 1 || col >8) {
                     break;
+                }
                 ChessPosition end = new ChessPosition(row, col);
                 ChessPiece target = board.getPiece(end);
                 if(target == null){
@@ -192,8 +196,9 @@ public class ChessPiece {
 
     private void tryMove(ChessBoard board, ChessPosition start, int row, int col, Collection<ChessMove> moves){
 
-        if(row<1 || row>8 || col<1 || col>8)
+        if(row<1 || row>8 || col<1 || col>8) {
             return;
+        }
         ChessPosition end = new ChessPosition(row, col);
         ChessPiece target = board.getPiece(end);
         if(target == null || target.getTeamColor() != this.color){

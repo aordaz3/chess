@@ -15,13 +15,15 @@ public class UserService {
     private final GameDAO gameDAO = new GameDAO();
     private int nextGameID = 1;
     public RegisterResult register(RegisterRequest request) {
-        if (request.username() == null || request.password() == null || request.email() == null)
+        if (request.username() == null || request.password() == null || request.email() == null) {
             throw new IllegalArgumentException("bad request");
+        }
 
         model.UserData user = userDAO.getUser(request.username());
 
-        if(user != null)
+        if(user != null) {
             throw new IllegalArgumentException("unauthorized");
+        }
         else{
             UserData newUser = new UserData(request.username(), request.password(), request.email());
             userDAO.createUser(newUser);
@@ -34,13 +36,15 @@ public class UserService {
     }
 
     public LoginResult login(LoginRequest request) {
-        if (request.username() == null || request.password() == null)
+        if (request.username() == null || request.password() == null) {
             throw new IllegalArgumentException("bad request");
+        }
 
         UserData user = userDAO.getUser(request.username());
 
-        if(user == null || !user.password().equals(request.password()))
+        if(user == null || !user.password().equals(request.password())) {
             throw new IllegalArgumentException("unauthorized");
+        }
 
         String authToken = java.util.UUID.randomUUID().toString();
         AuthData authData = new AuthData(authToken, request.username());

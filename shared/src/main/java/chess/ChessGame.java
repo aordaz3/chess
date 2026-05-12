@@ -68,8 +68,9 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece moving = board.getPiece(startPosition);
-        if(moving == null)
+        if(moving == null) {
             return new ArrayList<>();
+        }
 
         Collection<ChessMove> allMoves = moving.pieceMoves(board, startPosition);
         Collection<ChessMove> validMoves = new ArrayList<>();
@@ -201,8 +202,9 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         //in CM if in check and no valid moves left
-        if (!isInCheck(teamColor))
+        if (!isInCheck(teamColor)) {
             return false;
+        }
         return hasNoMoves(teamColor);
     }
 
@@ -215,8 +217,9 @@ public class ChessGame {
      */
     public boolean isInStalemate(TeamColor teamColor) {
         //in SM if not in check and no moves left
-        if(isInCheck(teamColor))
+        if(isInCheck(teamColor)) {
             return false;
+        }
         return hasNoMoves(teamColor);
     }
 
