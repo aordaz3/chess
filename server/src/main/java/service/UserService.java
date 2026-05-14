@@ -25,6 +25,9 @@ public class UserService {
             throw new IllegalArgumentException("unauthorized");
         }
         else{
+            if(request.username().isEmpty() || request.password().isEmpty() || request.email().isEmpty()){
+                throw new IllegalArgumentException("bad request");
+            }
             UserData newUser = new UserData(request.username(), request.password(), request.email());
             userDAO.createUser(newUser);
         }
@@ -90,6 +93,9 @@ public class UserService {
         AuthData userAuthData = authDAO.getAuth(authToken);
         if(userAuthData == null){
             throw new IllegalArgumentException("unauthorized");
+        }
+        if(request.gameName().isEmpty()){
+            throw new IllegalArgumentException("bad request");
         }
         int gameID = nextGameID++;
         ChessGame game = new ChessGame();

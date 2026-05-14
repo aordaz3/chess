@@ -10,92 +10,131 @@ import java.util.Collection;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
-    static final UserService service = new UserService();
+    static final UserService SERVICE = new UserService();
     @BeforeEach
     void deleteAll() {
-        service.clear();
+        SERVICE.clear();
     }
 
     @Test
-    void register() {
+    void registerPositive() {
         var newUser = new RegisterRequest("username", "password", "email");
-        var result = service.register(newUser);
+        var result = SERVICE.register(newUser);
 
         assertEquals("username", result.username());
         assertNotNull(result.authToken());
     }
+    @Test
+    void registerNegative() {
+        assertThrows(Exception.class, () -> SERVICE.register(new RegisterRequest("", "", "")));
+    }
 
     @Test
-    void login() {
-        service.register(new RegisterRequest("username", "password", "email"));
-        var result = service.login(new LoginRequest("username", "password"));
+    void loginPositive() {
+        SERVICE.register(new RegisterRequest("username", "password", "email"));
+        var result = SERVICE.login(new LoginRequest("username", "password"));
 
         assertNotNull(result.authToken());
         assertEquals("username", result.username());
 
     }
+    @Test
+    void loginNegativeWrongPassword() {
+
+        SERVICE.register(new RegisterRequest("username", "password", "email"));
+        assertThrows(Exception.class, () -> SERVICE.login(new LoginRequest("username", "wrongPassword")));
+    }
 
     @Test
-    void logout() {
-        var result = service.register(new RegisterRequest("username", "password", "email"));
+    void logoutPositive() {
+        var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
         String token = result.authToken();
 
-        assertDoesNotThrow(() -> service.logout(token));
-        assertThrows(Exception.class, () -> service.listGames(token));
+        assertDoesNotThrow(() -> SERVICE.logout(token));
+        assertThrows(Exception.class, () -> SERVICE.listGames(token));
 
     }
 
     @Test
-    void listGames() {
+    void logoutNegativeBadToken() {
+        assertThrows(Exception.class, () -> SERVICE.logout("fake-token"));
+    }
 
-        var result = service.register(new RegisterRequest("username", "password", "email"));
+    @Test
+    void listGamesPositive() {
 
-        Collection<GamesSummary> games = service.listGames(result.authToken());
+        var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
+
+        Collection<GamesSummary> games = SERVICE.listGames(result.authToken());
         assertEquals(0, games.size());
     }
 
     @Test
+    void listGamesNegativeBadToken() {
+        assertThrows(Exception.class, () -> SERVICE.listGames("fake-token"));
+    }
 
-    void createGame() {
+    @Test
 
-        var result = service.register(new RegisterRequest("username", "password", "email"));
-        CreateGameResult createResult = service.createGame(result.authToken(), new CreateGameRequest("first game"));
+    void createGamePositive() {
+
+        var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
+        CreateGameResult createResult = SERVICE.createGame(result.authToken(), new CreateGameRequest("first game"));
 
         assertNotNull(createResult);
         assertNotEquals(0, createResult.gameID());
 
-        Collection<GamesSummary> games = service.listGames(result.authToken());
+        Collection<GamesSummary> games = SERVICE.listGames(result.authToken());
         assertEquals(1, games.size());
 
     }
 
     @Test
+    void createGameNegativeBadName() {
 
-    void joinGame() {
-        var result = service.register(new RegisterRequest("owner", "password", "owner@email"));
-        CreateGameResult createResult = service.createGame(result.authToken(), new CreateGameRequest("magnus was here"));
+        var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
 
-        var player = service.register(new RegisterRequest("player", "password", "player@email"));
+        assertThrows(Exception.class, () -> SERVICE.createGame(result.authToken(), new CreateGameRequest("")));
+    }
 
-        assertDoesNotThrow(() -> {
-            service.joinGame(result.authToken(), new JoinGameRequest("WHITE", createResult.gameID()));
-        });
+    @Test
+    void joinGamePositive() {
+        var result = SERVICE.register(new RegisterRequest("owner", "password", "owner@email"));
+        CreateGameResult createResult = SERVICE.createGame(result.authToken(), new CreateGameRequest("magnus was here"));
 
-        Collection<GamesSummary> games = service.listGames(result.authToken());
+        var player = SERVICE.register(new RegisterRequest("player", "password", "player@email"));
+
+        assertDoesNotThrow(() -> SERVICE.joinGame(result.authToken(), new JoinGameRequest("WHITE", createResult.gameID())));
+
+        Collection<GamesSummary> games = SERVICE.listGames(result.authToken());
         assertEquals(1, games.size());
+
+    }
+    @Test
+    void joinGameNegativeInvalidColor() {
+
+        var owner = SERVICE.register(new RegisterRequest("owner", "password", "owner@email"));
+        CreateGameResult createResult = SERVICE.createGame(owner.authToken(), new CreateGameRequest("game"));
+        var player = SERVICE.register(new RegisterRequest("player", "password", "player@email"));
+
+        assertThrows(Exception.class, () -> SERVICE.joinGame(player.authToken(), new JoinGameRequest("PURPLE", createResult.gameID())));
 
     }
 
     @Test
+    void clearPositive() {
+        var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
+        SERVICE.createGame(result.authToken(), new CreateGameRequest("magnus was here"));
+        SERVICE.clear();
 
-    void clear() {
-        var result = service.register(new RegisterRequest("username", "password", "email"));
-        service.createGame(result.authToken(), new CreateGameRequest("magnus was here"));
-        service.clear();
-
-        var newUser = service.register(new RegisterRequest("newuser", "password", "new@email"));
-        Collection<GamesSummary> games = service.listGames(newUser.authToken());
+        var newUser = SERVICE.register(new RegisterRequest("newuser", "password", "new@email"));
+        Collection<GamesSummary> games = SERVICE.listGames(newUser.authToken());
         assertEquals(0, games.size());
 
+    }
+
+    @Test
+    void clearNegativeOnEmptyService() {
+        assertDoesNotThrow(() -> SERVICE.clear());
     }
 }
