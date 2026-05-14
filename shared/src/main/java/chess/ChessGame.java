@@ -155,17 +155,20 @@ public class ChessGame {
                     // get its moves
                     Collection<ChessMove> enemyMoves = piece.pieceMoves(board, currentPos);
                     //check to see if it lines up
-                    for (ChessMove move : enemyMoves) {
-                        if (move.getEndPosition().equals(kingPos)) {
-                            return true;
-                        }
-                    }
+                    return checkLines(enemyMoves, kingPos) == 1;
                 }
             }
         }
         return false;
     }
-
+    private int checkLines(Collection<ChessMove> enemyMoves, ChessPosition kingPos){
+        for(ChessMove move : enemyMoves){
+            if(move.getEndPosition().equals(kingPos)){
+                return 1;
+            }
+        }
+        return 0;
+    }
     private ChessPosition findKing(TeamColor teamColor) {
         for(int r = 1; r <= 8; r++){
             for(int c = 1; c <= 8; c++){

@@ -10,6 +10,14 @@ public class UserHandler {
 
     private final UserService userService = new UserService();
 
+    private void helper(Context ctx, IllegalArgumentException e){
+        if ("unauthorized".equals(e.getMessage())) {
+            ctx.status(403).json(new ErrorResponse("Error: already taken"));
+        }
+        else {
+            ctx.status(400).json(new ErrorResponse("Error: bad request"));
+        }
+    }
     public void register(Context ctx) {
         //pass over USERDATA: {username, password, email}
         try {
@@ -18,12 +26,7 @@ public class UserHandler {
             ctx.status(200).json(result);
         }
         catch (IllegalArgumentException e) {
-            if ("unauthorized".equals(e.getMessage())) {
-                ctx.status(403).json(new ErrorResponse("Error: already taken"));
-            }
-            else {
-                ctx.status(400).json(new ErrorResponse("Error: bad request"));
-            }
+            helper(ctx, e);
         }
         catch (Exception e) {
             ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
@@ -63,6 +66,7 @@ public class UserHandler {
             ctx.status(500).json(new ErrorResponse("Error: " + e.getMessage()));
         }
     }
+
 
     public void listGames(Context ctx) {
         try {
