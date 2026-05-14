@@ -155,19 +155,22 @@ public class ChessGame {
                     // get its moves
                     Collection<ChessMove> enemyMoves = piece.pieceMoves(board, currentPos);
                     //check to see if it lines up
-                    return checkLines(enemyMoves, kingPos) == 1;
+                    if(checkLines(enemyMoves, kingPos)){
+                        return true;
+                    }
+                    //return checkLines(enemyMoves, kingPos);
                 }
             }
         }
         return false;
     }
-    private int checkLines(Collection<ChessMove> enemyMoves, ChessPosition kingPos){
+    private boolean checkLines(Collection<ChessMove> enemyMoves, ChessPosition kingPos){
         for(ChessMove move : enemyMoves){
             if(move.getEndPosition().equals(kingPos)){
-                return 1;
+                return true;
             }
         }
-        return 0;
+        return false;
     }
     private ChessPosition findKing(TeamColor teamColor) {
         for(int r = 1; r <= 8; r++){
