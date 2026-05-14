@@ -21,8 +21,8 @@ class UserServiceTest {
         var newUser = new RegisterRequest("username", "password", "email");
         var result = service.register(newUser);
 
-        Collection<GamesSummary> games = service.listGames(result.authToken());
-        assertEquals(1, games.size());
+        assertEquals("username", result.username());
+        assertNotNull(result.authToken());
     }
 
     @Test
