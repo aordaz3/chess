@@ -1,12 +1,9 @@
 package dataaccess;
 
-import com.google.gson.Gson;
 import model.*;
 
 import java.sql.*;
 
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
-import static java.sql.Types.NULL;
 
 public class MySQLAuthDAO {
 
@@ -42,11 +39,27 @@ public class MySQLAuthDAO {
     }
 
     public void deleteAuth(String authToken) {
-        auths.remove(authToken);
+        try(var cox = DatabaseManager.getConnection()){
+            try(var statement = cox.prepareStatement("DELETE FROM auth WHERE authToken = ?")){
+                statement.setString(1, authToken);
+                statement.executeUpdate();
+            }
+        }catch (SQLException e) {
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void clear() {
-        auths.clear();
+        try(var cox = DatabaseManager.getConnection()) {
+            try(var statement = cox.prepareStatement("DROP DATABASE auth")){
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private final String[] createStatements = {
