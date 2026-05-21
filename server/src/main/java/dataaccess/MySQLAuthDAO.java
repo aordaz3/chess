@@ -34,7 +34,7 @@ public class MySQLAuthDAO {
                     var username = results.getString("username");
                     return new AuthData(authToken, username);
                 }
-                return null; // Return null if token is not found instead of throwing error
+                return null;
             }
         } catch (SQLException e) {
             throw new DataAccessException("Error retrieving auth token: " + e.getMessage());
@@ -55,7 +55,6 @@ public class MySQLAuthDAO {
     }
 
     public void clear() throws DataAccessException {
-        // TRUNCATE empties the table without destroying the table structure
         try (var cox = DatabaseManager.getConnection();
              var statement = cox.prepareStatement("TRUNCATE TABLE auth")) {
 
