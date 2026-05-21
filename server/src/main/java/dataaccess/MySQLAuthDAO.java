@@ -1,9 +1,7 @@
 package dataaccess;
 
 import model.*;
-
 import java.sql.*;
-
 
 public class MySQLAuthDAO {
 
@@ -11,64 +9,70 @@ public class MySQLAuthDAO {
         configureDatabase();
     }
 
-    public void createAuth(AuthData auth) {
-        try(var cox = DatabaseManager.getConnection()){
-            try (var statement = cox.prepareStatement("INSERT INTO auth (username, authToken) VALUES(?, ?)")) {
-                statement.setString(1, auth.username());
-                statement.setString(2, auth.authToken());
-                statement.executeUpdate();
-            }
-        }catch (SQLException | DataAccessException e){
+    public void createAuth(AuthData auth) throws DataAccessException {
+        String query = "INSERT INTO auth (username, authToken) VALUES(?, ?)";
+        try (var cox = DatabaseManager.getConnection();
+             var statement = cox.prepareStatement(query)) {
 
+            statement.setString(1, auth.username());
+            statement.setString(2, auth.authToken());
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error creating auth token: " + e.getMessage());
         }
     }
 
     public AuthData getAuth(String authToken) throws DataAccessException {
-        try(var cox = DatabaseManager.getConnection()){
-            try(var statment = cox.prepareStatement("SELECT username, authToken FROM auth WHERE authToken = ?")){
-                statment.setString(1, authToken);
-                try(var results = statment.executeQuery()){
-                    results.next();
+        String query = "SELECT username, authToken FROM auth WHERE authToken = ?";
+        try (var cox = DatabaseManager.getConnection();
+             var statement = cox.prepareStatement(query)) {
+
+            statement.setString(1, authToken);
+            try (var results = statement.executeQuery()) {
+                if (results.next()) {
                     var username = results.getString("username");
                     return new AuthData(authToken, username);
                 }
+                return null; // Return null if token is not found instead of throwing error
             }
-        }catch (SQLException e){
-            throw new DataAccessException("Auth Token does not exist" + authToken);
+        } catch (SQLException e) {
+            throw new DataAccessException("Error retrieving auth token: " + e.getMessage());
         }
     }
 
-    public void deleteAuth(String authToken) {
-        try(var cox = DatabaseManager.getConnection()){
-            try(var statement = cox.prepareStatement("DELETE FROM auth WHERE authToken = ?")){
-                statement.setString(1, authToken);
-                statement.executeUpdate();
-            }
-        }catch (SQLException e) {
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
+    public void deleteAuth(String authToken) throws DataAccessException {
+        String query = "DELETE FROM auth WHERE authToken = ?";
+        try (var cox = DatabaseManager.getConnection();
+             var statement = cox.prepareStatement(query)) {
+
+            statement.setString(1, authToken);
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error deleting auth token: " + e.getMessage());
         }
     }
 
-    public void clear() {
-        try(var cox = DatabaseManager.getConnection()) {
-            try(var statement = cox.prepareStatement("DROP DATABASE auth")){
-                statement.executeUpdate();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException(e);
+    public void clear() throws DataAccessException {
+        // TRUNCATE empties the table without destroying the table structure
+        try (var cox = DatabaseManager.getConnection();
+             var statement = cox.prepareStatement("TRUNCATE TABLE auth")) {
+
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error clearing auth table: " + e.getMessage());
         }
     }
 
     private final String[] createStatements = {
             """            
-                CREATE TABLE if NOT EXISTS auth (
+                CREATE TABLE IF NOT EXISTS auth (
                     username VARCHAR(255) NOT NULL,
                     authToken VARCHAR(255) NOT NULL,
                     PRIMARY KEY (authToken)
-                    )
+                )
             """
     };
 
@@ -81,7 +85,7 @@ public class MySQLAuthDAO {
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException( String.format("Unable to configure database: %s", ex.getMessage()));
+            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage()));
         }
     }
 }
