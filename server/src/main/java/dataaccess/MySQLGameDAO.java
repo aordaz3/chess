@@ -61,8 +61,6 @@ public class MySQLGameDAO {
 
             statement.setString(1, json);
             statement.setInt(2, gameInfo.gameID());
-
-            // FIX: Use executeUpdate() for updates, not executeQuery()
             statement.executeUpdate();
 
         } catch (SQLException e) {
@@ -92,7 +90,6 @@ public class MySQLGameDAO {
     }
 
     public void clear() throws DataAccessException {
-        // FIX: Wiping 'game' table instead of 'auth'
         String query = "TRUNCATE TABLE game";
 
         try (var cox = DatabaseManager.getConnection();
