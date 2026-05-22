@@ -13,13 +13,10 @@ public class UserService {
     private final MySQLUserDAO userDAO;
 
     public UserService() {
-        try {
-            this.authDAO = new MySQLAuthDAO();
-            this.gameDAO = new MySQLGameDAO();
-            this.userDAO = new MySQLUserDAO();
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Fatal: Failed to initialize DAOs in UserService", e);
-        }
+        this.authDAO = new MySQLAuthDAO();
+        this.gameDAO = new MySQLGameDAO();
+        this.userDAO = new MySQLUserDAO();
+
     }
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {

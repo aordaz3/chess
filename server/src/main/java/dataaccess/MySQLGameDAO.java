@@ -9,8 +9,12 @@ import java.util.Collection;
 
 public class MySQLGameDAO {
 
-    public MySQLGameDAO() throws DataAccessException {
-        configureDatabase();
+    public MySQLGameDAO() {
+        try {
+            configureDatabase();
+        } catch (DataAccessException e) {
+            System.err.println("Unable to configure game table: " + e.getMessage());
+        }
     }
 
     public void createGame(int gameID, GameData gameInfo) throws DataAccessException {
@@ -18,13 +22,12 @@ public class MySQLGameDAO {
         var serializer = new Gson();
         var json = serializer.toJson(gameInfo);
 
-        try (var conex = DatabaseManager.getConnection();
+        try (Connection conex = DatabaseManager.getConnection();
              var statement = conex.prepareStatement(query)) {
 
             statement.setInt(1, gameID);
             statement.setString(2, json);
             statement.executeUpdate();
-
         } catch (SQLException e) {
             throw new DataAccessException("Error creating game: " + e.getMessage());
         }
@@ -34,11 +37,10 @@ public class MySQLGameDAO {
         String query = "SELECT json FROM game WHERE gameID = ?";
         var serializer = new Gson();
 
-        try (var conx = DatabaseManager.getConnection();
+        try (Connection conx = DatabaseManager.getConnection();
              var statement = conx.prepareStatement(query)) {
 
             statement.setInt(1, gameID);
-
             try (var results = statement.executeQuery()) {
                 if (results.next()) {
                     var gameInfo = results.getString("json");
@@ -56,13 +58,12 @@ public class MySQLGameDAO {
         var serializer = new Gson();
         var json = serializer.toJson(gameInfo);
 
-        try (var cox = DatabaseManager.getConnection();
+        try (Connection cox = DatabaseManager.getConnection();
              var statement = cox.prepareStatement(query)) {
 
             statement.setString(1, json);
             statement.setInt(2, gameInfo.gameID());
             statement.executeUpdate();
-
         } catch (SQLException e) {
             throw new DataAccessException("Error updating game: " + e.getMessage());
         }
@@ -73,7 +74,7 @@ public class MySQLGameDAO {
         var serializer = new Gson();
         Collection<GameData> games = new ArrayList<>();
 
-        try (var cox = DatabaseManager.getConnection();
+        try (Connection cox = DatabaseManager.getConnection();
              var statement = cox.prepareStatement(query);
              var results = statement.executeQuery()) {
 
@@ -83,7 +84,6 @@ public class MySQLGameDAO {
                 games.add(game);
             }
             return games;
-
         } catch (SQLException e) {
             throw new DataAccessException("Error listing games: " + e.getMessage());
         }
@@ -91,8 +91,7 @@ public class MySQLGameDAO {
 
     public void clear() throws DataAccessException {
         String query = "TRUNCATE TABLE game";
-
-        try (var cox = DatabaseManager.getConnection();
+        try (Connection cox = DatabaseManager.getConnection();
              var statement = cox.prepareStatement(query)) {
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -101,7 +100,7 @@ public class MySQLGameDAO {
     }
 
     private final String[] createStatements = {
-            """            
+       """            
        CREATE TABLE IF NOT EXISTS game (
             gameID INT NOT NULL,
             json TEXT NOT NULL,

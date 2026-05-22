@@ -5,9 +5,9 @@ import handler.UserHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.javalin.json.JsonMapper;
+import dataaccess.DataAccessException;
 
 import java.lang.reflect.Type;
-
 
 public class Server {
 
@@ -32,9 +32,9 @@ public class Server {
         javalin = Javalin.create(config -> {
             config.jsonMapper(gsonMapper);
             config.staticFiles.add("web");
-
         });
 
+        // Routing Configuration
         javalin.post("/user", ctx -> userHandler.register(ctx));
         javalin.post("/session", ctx -> userHandler.login(ctx));
         javalin.delete("/session", ctx -> userHandler.logout(ctx));
@@ -43,8 +43,35 @@ public class Server {
         javalin.put("/game", ctx -> userHandler.joinGame(ctx));
         javalin.delete("/db", ctx -> userHandler.clear(ctx));
 
-    }
+        // Unified Exception Mapper for DataAccessException
+        javalin.exception(DataAccessException.class, (e, ctx) -> {
+            String msg = e.getMessage();
+            if (msg == null) {
+                ctx.status(500);
+                ctx.json(new ErrorResponse("Error: Internal Server Failure"));
+                return;
+            }
 
+            switch (msg.toLowerCase()) {
+                case "bad request" -> {
+                    ctx.status(400);
+                    ctx.json(new ErrorResponse("Error: bad request"));
+                }
+                case "unauthorized" -> {
+                    ctx.status(401);
+                    ctx.json(new ErrorResponse("Error: unauthorized"));
+                }
+                case "already taken" -> {
+                    ctx.status(403);
+                    ctx.json(new ErrorResponse("Error: already taken"));
+                }
+                default -> {
+                    ctx.status(500);
+                    ctx.json(new ErrorResponse("Error: " + msg));
+                }
+            }
+        });
+    }
 
     public int run(int desiredPort) {
         javalin.start(desiredPort);
