@@ -11,7 +11,6 @@ public class MySQLUserDAO {
     }
 
     public UserData getUser(String username) throws DataAccessException {
-        // 1. Fixed SQL filter: Query by username, NOT password
         String query = "SELECT username, password, email FROM user WHERE username = ?";
 
         try (var conx = DatabaseManager.getConnection();
@@ -21,7 +20,6 @@ public class MySQLUserDAO {
 
             try (var results = statement.executeQuery()) {
                 if (results.next()) {
-                    // 2. Map directly to the CS 240 UserData model
                     return new UserData(
                             results.getString("username"),
                             results.getString("password"),
@@ -32,7 +30,7 @@ public class MySQLUserDAO {
         } catch (SQLException e) {
             throw new DataAccessException("Error finding user: " + e.getMessage());
         }
-        return null; // Return null if user does not exist
+        return null;
     }
 
     public void createUser(UserData user) throws DataAccessException {
@@ -52,7 +50,7 @@ public class MySQLUserDAO {
     }
 
     public void clear() throws DataAccessException {
-        String query = "TRUNCATE TABLE user"; // Fast clear of all user rows
+        String query = "TRUNCATE TABLE user";
 
         try (var conx = DatabaseManager.getConnection();
              var statement = conx.prepareStatement(query)) {
