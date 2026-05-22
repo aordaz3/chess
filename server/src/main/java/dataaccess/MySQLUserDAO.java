@@ -1,23 +1,26 @@
 package dataaccess;
 
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 public class MySQLUserDAO {
 
-    public MySQLUserDAO() throws DataAccessException {
-        configureDatabase();
+    public MySQLUserDAO() {
+        try {
+            configureDatabase();
+        } catch (DataAccessException e) {
+            System.err.println("Unable to configure user table: " + e.getMessage());
+        }
     }
 
     public UserData getUser(String username) throws DataAccessException {
         String query = "SELECT username, password, email FROM user WHERE username = ?";
-
-        try (var conx = DatabaseManager.getConnection();
+        try (Connection conx = DatabaseManager.getConnection();
              var statement = conx.prepareStatement(query)) {
 
             statement.setString(1, username);
-
             try (var results = statement.executeQuery()) {
                 if (results.next()) {
                     return new UserData(
@@ -36,13 +39,14 @@ public class MySQLUserDAO {
     public void createUser(UserData user) throws DataAccessException {
         String query = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
 
-        try (var conx = DatabaseManager.getConnection();
+        String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+
+        try (Connection conx = DatabaseManager.getConnection();
              var statement = conx.prepareStatement(query)) {
 
             statement.setString(1, user.username());
-            statement.setString(2, user.password());
+            statement.setString(2, hashedPassword);
             statement.setString(3, user.email());
-
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new DataAccessException("Error creating user: " + e.getMessage());
@@ -51,10 +55,8 @@ public class MySQLUserDAO {
 
     public void clear() throws DataAccessException {
         String query = "TRUNCATE TABLE user";
-
-        try (var conx = DatabaseManager.getConnection();
+        try (Connection conx = DatabaseManager.getConnection();
              var statement = conx.prepareStatement(query)) {
-
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new DataAccessException("Error clearing user table: " + e.getMessage());
@@ -63,13 +65,13 @@ public class MySQLUserDAO {
 
     private final String[] createStatements = {
             """            
-            CREATE TABLE IF NOT EXISTS user (
-                username VARCHAR(255) NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                PRIMARY KEY (username)
-            )
-            """
+        CREATE TABLE IF NOT EXISTS user (
+            username VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            PRIMARY KEY (username)
+        )
+        """
     };
 
     private void configureDatabase() throws DataAccessException {
