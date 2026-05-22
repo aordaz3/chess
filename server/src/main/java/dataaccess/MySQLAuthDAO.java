@@ -87,4 +87,5 @@ public class MySQLAuthDAO {
             throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage()));
         }
     }
+
 }
