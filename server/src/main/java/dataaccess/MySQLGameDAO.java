@@ -1,11 +1,11 @@
 package dataaccess;
 
 import com.google.gson.Gson;
-import model.AuthData;
 import model.GameData;
-
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class MySQLGameDAO {
 
@@ -13,66 +13,103 @@ public class MySQLGameDAO {
         configureDatabase();
     }
 
-    public void createGame(int gameID, GameData gameInfo){
-        try(var conex = DatabaseManager.getConnection()){
-            var serializer = new Gson();
-            var json = serializer.toJson(gameInfo);
-            try(var statement = conex.prepareStatement("INSERT INTO game (gameID, json) VALUES(?,?)")){
-                statement.setInt(1, gameID);
-                statement.setString(2, json);
-                statement.executeUpdate();
-            }
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException(e);
+    public void createGame(int gameID, GameData gameInfo) throws DataAccessException {
+        String query = "INSERT INTO game (gameID, json) VALUES(?, ?)";
+        var serializer = new Gson();
+        var json = serializer.toJson(gameInfo);
+
+        try (var conex = DatabaseManager.getConnection();
+             var statement = conex.prepareStatement(query)) {
+
+            statement.setInt(1, gameID);
+            statement.setString(2, json);
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error creating game: " + e.getMessage());
         }
     }
-    public GameData getGame(int gameID){
+
+    public GameData getGame(int gameID) throws DataAccessException {
+        String query = "SELECT json FROM game WHERE gameID = ?";
         var serializer = new Gson();
-        String query = "SELECT gameID, json FROM game WHERE gameID = ?";
-        try(var conx = DatabaseManager.getConnection();
-            var statement = conx.prepareStatement(query)){
+
+        try (var conx = DatabaseManager.getConnection();
+             var statement = conx.prepareStatement(query)) {
+
             statement.setInt(1, gameID);
-            try (var results = statement.executeQuery()){
+
+            try (var results = statement.executeQuery()) {
                 if (results.next()) {
                     var gameInfo = results.getString("json");
                     return serializer.fromJson(gameInfo, GameData.class);
                 }
             }
             return null;
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new DataAccessException("Error retrieving game: " + e.getMessage());
         }
     }
-    public void updateGame(GameData gameInfo){
-        var serializer = new Gson();
-        var gameID = gameInfo.gameID();
-        var json = serializer.toJson(gameInfo);
+
+    public void updateGame(GameData gameInfo) throws DataAccessException {
         String query = "UPDATE game SET json = ? WHERE gameID = ?";
-        try(var cox = DatabaseManager.getConnection();
-            var statemnet = cox.prepareStatement(query)){
-            statemnet.setString(1, json);
-            statemnet.setInt(2, gameID);
-            var results = statemnet.executeQuery();
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException(e);
+        var serializer = new Gson();
+        var json = serializer.toJson(gameInfo);
+
+        try (var cox = DatabaseManager.getConnection();
+             var statement = cox.prepareStatement(query)) {
+
+            statement.setString(1, json);
+            statement.setInt(2, gameInfo.gameID());
+
+            // FIX: Use executeUpdate() for updates, not executeQuery()
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error updating game: " + e.getMessage());
         }
     }
-    public void clear() throws DataAccessException {
+
+    public Collection<GameData> listGames() throws DataAccessException {
+        String query = "SELECT json FROM game";
+        var serializer = new Gson();
+        Collection<GameData> games = new ArrayList<>();
+
         try (var cox = DatabaseManager.getConnection();
-             var statement = cox.prepareStatement("TRUNCATE TABLE auth")) {
+             var statement = cox.prepareStatement(query);
+             var results = statement.executeQuery()) {
+
+            while (results.next()) {
+                var json = results.getString("json");
+                GameData game = serializer.fromJson(json, GameData.class);
+                games.add(game);
+            }
+            return games;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error listing games: " + e.getMessage());
+        }
+    }
+
+    public void clear() throws DataAccessException {
+        // FIX: Wiping 'game' table instead of 'auth'
+        String query = "TRUNCATE TABLE game";
+
+        try (var cox = DatabaseManager.getConnection();
+             var statement = cox.prepareStatement(query)) {
             statement.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException("Error clearing auth table: " + e.getMessage());
+            throw new DataAccessException("Error clearing game table: " + e.getMessage());
         }
     }
 
     private final String[] createStatements = {
-       """            
-       CREATE TABLE if NOT EXISTS game (
-                    gameID INT NOT NULL,
-                    json TEXT NOT NULL,
-                    PRIMARY KEY (gameID)
-                    )
+            """            
+       CREATE TABLE IF NOT EXISTS game (
+            gameID INT NOT NULL,
+            json TEXT NOT NULL,
+            PRIMARY KEY (gameID)
+       )
        """
     };
 

@@ -1,36 +1,41 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 import model.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class UserService {
-    private final UserDAO userDAO = new UserDAO();
-    private final AuthDAO authDAO = new AuthDAO();
-    private final GameDAO gameDAO = new GameDAO();
-    private int nextGameID = 1;
-    public RegisterResult register(RegisterRequest request) {
-        if (request.username() == null || request.password() == null || request.email() == null) {
-            throw new IllegalArgumentException("bad request");
+    private final MySQLAuthDAO authDAO;
+    private final MySQLGameDAO gameDAO;
+    private final MySQLUserDAO userDAO;
+
+    public UserService() {
+        try {
+            this.authDAO = new MySQLAuthDAO();
+            this.gameDAO = new MySQLGameDAO();
+            this.userDAO = new MySQLUserDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Fatal: Failed to initialize DAOs in UserService", e);
+        }
+    }
+
+    public RegisterResult register(RegisterRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null || request.email() == null ||
+                request.username().isEmpty() || request.password().isEmpty() || request.email().isEmpty()) {
+            throw new BadRequestException("bad request");
         }
 
-        model.UserData user = userDAO.getUser(request.username());
+        UserData user = userDAO.getUser(request.username());
+        if (user != null) {
+            throw new AlreadyTakenException("already taken");
+        }
 
-        if(user != null) {
-            throw new IllegalArgumentException("unauthorized");
-        }
-        else{
-            if(request.username().isEmpty() || request.password().isEmpty() || request.email().isEmpty()){
-                throw new IllegalArgumentException("bad request");
-            }
-            UserData newUser = new UserData(request.username(), request.password(), request.email());
-            userDAO.createUser(newUser);
-        }
+        UserData newUser = new UserData(request.username(), request.password(), request.email());
+        userDAO.createUser(newUser);
+
         String authToken = java.util.UUID.randomUUID().toString();
         AuthData authData = new AuthData(authToken, request.username());
         authDAO.createAuth(authData);
@@ -38,15 +43,14 @@ public class UserService {
         return new RegisterResult(request.username(), authToken);
     }
 
-    public LoginResult login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) throws DataAccessException {
         if (request.username() == null || request.password() == null) {
-            throw new IllegalArgumentException("bad request");
+            throw new BadRequestException("bad request");
         }
 
         UserData user = userDAO.getUser(request.username());
-
-        if(user == null || !user.password().equals(request.password())) {
-            throw new IllegalArgumentException("unauthorized");
+        if (user == null || !user.password().equals(request.password())) {
+            throw new UnauthorizedException("unauthorized");
         }
 
         String authToken = java.util.UUID.randomUUID().toString();
@@ -56,95 +60,93 @@ public class UserService {
         return new LoginResult(request.username(), authToken);
     }
 
-    public void logout(String authToken) {
+    public void logout(String authToken) throws DataAccessException {
         if (authToken == null) {
-            throw new IllegalArgumentException("bad request");
+            throw new BadRequestException("bad request");
         }
         AuthData userAuthData = authDAO.getAuth(authToken);
-        if(userAuthData == null){
-            throw new IllegalArgumentException("unauthorized");
+        if (userAuthData == null) {
+            throw new UnauthorizedException("unauthorized");
         }
         authDAO.deleteAuth(authToken);
     }
 
-    public Collection<GamesSummary> listGames(String authToken){
-        //ADD LOGIC
-        if(authToken == null){
-            throw new IllegalArgumentException("unauthorized");
+    public Collection<GamesSummary> listGames(String authToken) throws DataAccessException {
+        if (authToken == null) {
+            throw new UnauthorizedException("unauthorized");
         }
         AuthData userAuthData = authDAO.getAuth(authToken);
-        if(userAuthData == null){
-            throw new IllegalArgumentException("unauthorized");
+        if (userAuthData == null) {
+            throw new UnauthorizedException("unauthorized");
         }
+
         Collection<GameData> unfiltered = gameDAO.listGames();
         Collection<GamesSummary> filtered = new ArrayList<>();
-        for(GameData gameInfo : unfiltered){
-            filtered.add(new GamesSummary(gameInfo.gameID(), gameInfo.gameName(),gameInfo.whiteUsername(),gameInfo.blackUsername()));
+        for (GameData gameInfo : unfiltered) {
+            filtered.add(new GamesSummary(gameInfo.gameID(), gameInfo.gameName(), gameInfo.whiteUsername(), gameInfo.blackUsername()));
         }
         return filtered;
     }
 
-    public CreateGameResult createGame(String authToken, CreateGameRequest request){
-        //ADD LOGIC
-        if(authToken == null || request == null || request.gameName() == null){
-            throw new IllegalArgumentException("bad request");
+    public CreateGameResult createGame(String authToken, CreateGameRequest request) throws DataAccessException {
+        if (authToken == null || request == null || request.gameName() == null || request.gameName().isEmpty()) {
+            throw new BadRequestException("bad request");
         }
 
         AuthData userAuthData = authDAO.getAuth(authToken);
-        if(userAuthData == null){
-            throw new IllegalArgumentException("unauthorized");
+        if (userAuthData == null) {
+            throw new UnauthorizedException("unauthorized");
         }
-        if(request.gameName().isEmpty()){
-            throw new IllegalArgumentException("bad request");
-        }
-        int gameID = nextGameID++;
+        int gameID = Math.abs((request.gameName() + System.currentTimeMillis()).hashCode());
+
         ChessGame game = new ChessGame();
+        game.getBoard().resetBoard();
+
         GameData gameInfo = new GameData(gameID, null, null, request.gameName(), game);
         gameDAO.createGame(gameID, gameInfo);
         return new CreateGameResult(gameID);
     }
 
-    public void joinGame(String authToken, JoinGameRequest request){
-        //ADD LOGIC
-        if(authToken == null || request == null || request.gameID() < 0 || request.playerColor() == null){
-            throw new IllegalArgumentException("bad request");
+    public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
+        if (authToken == null || request == null || request.gameID() <= 0 || request.playerColor() == null) {
+            throw new BadRequestException("bad request");
         }
 
         AuthData userAuthData = authDAO.getAuth(authToken);
-        if(userAuthData == null){
-            throw new IllegalArgumentException("unauthorized");
+        if (userAuthData == null) {
+            throw new UnauthorizedException("unauthorized");
         }
+
         GameData targetGame = gameDAO.getGame(request.gameID());
-        //check to see if we can join game
-        if(targetGame == null || targetGame.game() == null || (targetGame.blackUsername() != null && targetGame.whiteUsername() != null)){
-            throw new IllegalArgumentException("bad request");
+        if (targetGame == null) {
+            throw new BadRequestException("bad request"); // Game doesn't exist
         }
-        if (request.playerColor().equals("WHITE") || request.playerColor().equals("WHITE/BLACK")) {
+
+        String color = request.playerColor().toUpperCase();
+        if (color.equals("WHITE")) {
             if (targetGame.whiteUsername() != null) {
-                throw new IllegalArgumentException("already taken");
+                throw new AlreadyTakenException("already taken");
             }
             GameData updateWhite = new GameData(request.gameID(), userAuthData.username(), targetGame.blackUsername(),
-                                                targetGame.gameName(),targetGame.game());
+                    targetGame.gameName(), targetGame.game());
             gameDAO.updateGame(updateWhite);
             return;
-        }
-        if (request.playerColor().equals("BLACK")) {
+        } else if (color.equals("BLACK")) {
             if (targetGame.blackUsername() != null) {
-                throw new IllegalArgumentException("already taken");
+                throw new AlreadyTakenException("already taken");
             }
             GameData updatedBlack = new GameData(request.gameID(), targetGame.whiteUsername(), userAuthData.username(),
-                                                targetGame.gameName(), targetGame.game());
+                    targetGame.gameName(), targetGame.game());
             gameDAO.updateGame(updatedBlack);
             return;
         }
-        throw new IllegalArgumentException("bad request");
+
+        throw new BadRequestException("bad request");
     }
-    public void clear(){
-        //DELETE EVERYTHING IN THE DB
+
+    public void clear() throws DataAccessException {
         gameDAO.clear();
         authDAO.clear();
         userDAO.clear();
-        nextGameID = 1;
     }
-
 }
