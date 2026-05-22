@@ -11,7 +11,7 @@ public class MySQLGameDAO {
 
     public MySQLGameDAO() {
         try {
-            configureDatabase();
+            DatabaseManager.configureDatabase(createStatements);
         } catch (DataAccessException e) {
             System.err.println("Unable to configure game table: " + e.getMessage());
         }
@@ -108,17 +108,4 @@ public class MySQLGameDAO {
        )
        """
     };
-
-    private void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-        try (Connection conn = DatabaseManager.getConnection()) {
-            for (String statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage()));
-        }
-    }
 }

@@ -9,7 +9,7 @@ public class MySQLUserDAO {
 
     public MySQLUserDAO() {
         try {
-            configureDatabase();
+            DatabaseManager.configureDatabase(createStatements);
         } catch (DataAccessException e) {
             System.err.println("Unable to configure user table: " + e.getMessage());
         }
@@ -64,7 +64,7 @@ public class MySQLUserDAO {
     }
 
     private final String[] createStatements = {
-            """            
+        """            
         CREATE TABLE IF NOT EXISTS user (
             username VARCHAR(255) NOT NULL,
             password VARCHAR(255) NOT NULL,
@@ -73,17 +73,4 @@ public class MySQLUserDAO {
         )
         """
     };
-
-    private void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-        try (Connection conn = DatabaseManager.getConnection()) {
-            for (String statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage()));
-        }
-    }
 }
