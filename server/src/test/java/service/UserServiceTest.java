@@ -1,7 +1,7 @@
 package service;
 
+import dataaccess.DataAccessException;
 import model.*;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,58 +11,61 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
     static final UserService SERVICE = new UserService();
+
     @BeforeEach
-    void deleteAll() {
+    void deleteAll() throws DataAccessException {
         SERVICE.clear();
     }
 
     @Test
-    void registerPositive() {
+    void registerPositive() throws DataAccessException {
         var newUser = new RegisterRequest("username", "password", "email");
         var result = SERVICE.register(newUser);
 
         assertEquals("username", result.username());
         assertNotNull(result.authToken());
     }
+
     @Test
     void registerNegative() {
-        assertThrows(Exception.class, () -> SERVICE.register(new RegisterRequest("", "", "")));
+        // Enforces that an empty request triggers a 400 Bad Request error
+        assertThrows(BadRequestException.class, () -> SERVICE.register(new RegisterRequest("", "", "")));
     }
 
     @Test
-    void loginPositive() {
+    void loginPositive() throws DataAccessException {
         SERVICE.register(new RegisterRequest("username", "password", "email"));
         var result = SERVICE.login(new LoginRequest("username", "password"));
 
         assertNotNull(result.authToken());
         assertEquals("username", result.username());
-
     }
-    @Test
-    void loginNegativeWrongPassword() {
 
+    @Test
+    void loginNegativeWrongPassword() throws DataAccessException {
         SERVICE.register(new RegisterRequest("username", "password", "email"));
-        assertThrows(Exception.class, () -> SERVICE.login(new LoginRequest("username", "wrongPassword")));
+        // Enforces that a bad password triggers a 401 Unauthorized error
+        assertThrows(UnauthorizedException.class, () -> SERVICE.login(new LoginRequest("username", "wrongPassword")));
     }
 
     @Test
-    void logoutPositive() {
+    void logoutPositive() throws DataAccessException {
         var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
         String token = result.authToken();
 
         assertDoesNotThrow(() -> SERVICE.logout(token));
-        assertThrows(Exception.class, () -> SERVICE.listGames(token));
-
+        // Fetching games with a dropped token should trigger a 401 Unauthorized error
+        assertThrows(UnauthorizedException.class, () -> SERVICE.listGames(token));
     }
 
     @Test
     void logoutNegativeBadToken() {
-        assertThrows(Exception.class, () -> SERVICE.logout("fake-token"));
+        // Logging out with a junk token should trigger a 401 Unauthorized error
+        assertThrows(UnauthorizedException.class, () -> SERVICE.logout("fake-token"));
     }
 
     @Test
-    void listGamesPositive() {
-
+    void listGamesPositive() throws DataAccessException {
         var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
 
         Collection<GamesSummary> games = SERVICE.listGames(result.authToken());
@@ -71,13 +74,12 @@ class UserServiceTest {
 
     @Test
     void listGamesNegativeBadToken() {
-        assertThrows(Exception.class, () -> SERVICE.listGames("fake-token"));
+        // Enforces that an unauthenticated call triggers a 401 Unauthorized error
+        assertThrows(UnauthorizedException.class, () -> SERVICE.listGames("fake-token"));
     }
 
     @Test
-
-    void createGamePositive() {
-
+    void createGamePositive() throws DataAccessException {
         var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
         CreateGameResult createResult = SERVICE.createGame(result.authToken(), new CreateGameRequest("first game"));
 
@@ -86,43 +88,41 @@ class UserServiceTest {
 
         Collection<GamesSummary> games = SERVICE.listGames(result.authToken());
         assertEquals(1, games.size());
-
     }
 
     @Test
-    void createGameNegativeBadName() {
-
+    void createGameNegativeBadName() throws DataAccessException {
         var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
 
-        assertThrows(Exception.class, () -> SERVICE.createGame(result.authToken(), new CreateGameRequest("")));
+        // Creating a game without a name triggers a 400 Bad Request error
+        assertThrows(BadRequestException.class, () -> SERVICE.createGame(result.authToken(), new CreateGameRequest("")));
     }
 
     @Test
-    void joinGamePositive() {
+    void joinGamePositive() throws DataAccessException {
         var result = SERVICE.register(new RegisterRequest("owner", "password", "owner@email"));
         CreateGameResult createResult = SERVICE.createGame(result.authToken(), new CreateGameRequest("magnus was here"));
 
-        var player = SERVICE.register(new RegisterRequest("player", "password", "player@email"));
+        SERVICE.register(new RegisterRequest("player", "password", "player@email"));
 
         assertDoesNotThrow(() -> SERVICE.joinGame(result.authToken(), new JoinGameRequest("WHITE", createResult.gameID())));
 
         Collection<GamesSummary> games = SERVICE.listGames(result.authToken());
         assertEquals(1, games.size());
-
     }
-    @Test
-    void joinGameNegativeInvalidColor() {
 
+    @Test
+    void joinGameNegativeInvalidColor() throws DataAccessException {
         var owner = SERVICE.register(new RegisterRequest("owner", "password", "owner@email"));
         CreateGameResult createResult = SERVICE.createGame(owner.authToken(), new CreateGameRequest("game"));
         var player = SERVICE.register(new RegisterRequest("player", "password", "player@email"));
 
-        assertThrows(Exception.class, () -> SERVICE.joinGame(player.authToken(), new JoinGameRequest("PURPLE", createResult.gameID())));
-
+        // Sending an invalid color parameter triggers a 400 Bad Request error
+        assertThrows(BadRequestException.class, () -> SERVICE.joinGame(player.authToken(), new JoinGameRequest("PURPLE", createResult.gameID())));
     }
 
     @Test
-    void clearPositive() {
+    void clearPositive() throws DataAccessException {
         var result = SERVICE.register(new RegisterRequest("username", "password", "email"));
         SERVICE.createGame(result.authToken(), new CreateGameRequest("magnus was here"));
         SERVICE.clear();
@@ -130,7 +130,6 @@ class UserServiceTest {
         var newUser = SERVICE.register(new RegisterRequest("newuser", "password", "new@email"));
         Collection<GamesSummary> games = SERVICE.listGames(newUser.authToken());
         assertEquals(0, games.size());
-
     }
 
     @Test
