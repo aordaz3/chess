@@ -1,5 +1,8 @@
 package ui;
 
+import chess.ChessGame;
+import chess.ChessPiece;
+
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
@@ -53,12 +56,14 @@ public class BoardUI {
         out.print(SET_BG_COLOR_BLACK);
         out.print(SET_TEXT_COLOR_BLACK);
     }
-    private static void setGrey(PrintStream out){
-        out.print(SET_BG_COLOR_LIGHT_GREY);
-        out.print(SET_BG_COLOR_LIGHT_GREY);
+    private static void colorPiece(PrintStream out, ChessGame.TeamColor color){
+        if(color == ChessGame.TeamColor.WHITE){
+            out.print(SET_TEXT_COLOR_RED);
+        }
+        out.print(SET_TEXT_COLOR_BLUE);
     }
     private static void drawColumnLabels(PrintStream out) {
-        out.print("    ");
+        out.print("   ");
         for (char col = 'a'; col <= 'h'; col++) {
             out.print(" " + col + " ");
         }
@@ -80,8 +85,8 @@ public class BoardUI {
             } else {
                 setBlack(out);
             }
-
-            out.print(EMPTY);
+            colorPiece(out, ChessGame.TeamColor.BLACK);
+            out.print(BLACK_PAWN);
         }
 
         out.print(RESET_BG_COLOR);
