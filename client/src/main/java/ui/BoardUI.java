@@ -23,12 +23,12 @@ public class BoardUI {
     private static final String BLACK_QUEEN = " Q ";
     private static final String BLACK_KING = " K ";
 
-    private static final String WHITE_PAWN = " p ";
-    private static final String WHITE_ROOK = " r ";
-    private static final String WHITE_KNIGHT = " n ";
-    private static final String WHITE_BISHOP = " b ";
-    private static final String WHITE_QUEEN = " q ";
-    private static final String WHITE_KING = " k ";
+    private static final String WHITE_PAWN = " P ";
+    private static final String WHITE_ROOK = " R ";
+    private static final String WHITE_KNIGHT = " N ";
+    private static final String WHITE_BISHOP = " B ";
+    private static final String WHITE_QUEEN = " Q ";
+    private static final String WHITE_KING = " K ";
 
     public static void main(String[] args) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
