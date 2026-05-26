@@ -39,7 +39,7 @@ public class BoardUI {
         ChessBoard board = new ChessBoard();
         board.resetBoard();
 
-        ChessGame.TeamColor perspective = ChessGame.TeamColor.WHITE;
+        ChessGame.TeamColor perspective = ChessGame.TeamColor.BLACK;
         drawChessBoard(out, board, perspective);
     }
 
