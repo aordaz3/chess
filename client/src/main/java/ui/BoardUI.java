@@ -31,17 +31,18 @@ public class BoardUI {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         out.print(ERASE_SCREEN);
+        out.print(RESET_BG_COLOR);
+        out.print(RESET_TEXT_COLOR);
 
         drawChessBoard(out);
-
-        out.print(SET_BG_COLOR_BLACK);
-        out.print(SET_TEXT_COLOR_WHITE);
     }
 
     private static void drawChessBoard(PrintStream out) {
+        drawColumnLabels(out);
         for (int boardRow = 0; boardRow < BOARD_SIZE_IN_SQUARES; ++boardRow) {
-            drawRowOfSquares(out, boardRow);
+            drawRow(out, boardRow);
         }
+        drawColumnLabels(out);
     }
 
     private static void setWhite(PrintStream out) {
@@ -56,18 +57,38 @@ public class BoardUI {
         out.print(SET_BG_COLOR_LIGHT_GREY);
         out.print(SET_BG_COLOR_LIGHT_GREY);
     }
-    private static void drawRowOfSquares(PrintStream out, int boardRow) {
-        for(int col = 0; col < BOARD_SIZE_IN_SQUARES; col ++){
-            boolean isWhite = (boardRow + col) % 2 == 0;
-            if(isWhite){
+    private static void drawColumnLabels(PrintStream out) {
+        out.print("    ");
+        for (char col = 'a'; col <= 'h'; col++) {
+            out.print(" " + col + " ");
+        }
+        out.println();
+    }
+    private static void drawRow(PrintStream out, int boardRow) {
+
+        int chessRow = 8 - boardRow;
+        out.print(RESET_BG_COLOR);
+        out.print(RESET_TEXT_COLOR);
+        out.print(" " + chessRow + " ");
+
+        for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
+
+            boolean isWhiteSquare = (boardRow + col) % 2 == 0;
+
+            if (isWhiteSquare) {
                 setWhite(out);
-            }
-            else{
+            } else {
                 setBlack(out);
             }
+
             out.print(EMPTY);
         }
-        setGrey(out);
+
+        out.print(RESET_BG_COLOR);
+        out.print(RESET_TEXT_COLOR);
+
+        out.print(" " + chessRow);
+
         out.println();
     }
 
