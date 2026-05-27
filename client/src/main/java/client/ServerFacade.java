@@ -73,11 +73,36 @@ public class ServerFacade {
         }
         authToken = null;
     }
-    public void createGame(String gameName){
-        //create request
+    public CreateGameResult createGame(String gameName) throws Exception {
+        CreateGameRequest request = new CreateGameRequest(gameName);
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("authorization", authToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
+                .build();
+
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Create game failed: " + response.body());
+        }
+        return gson.fromJson(response.body(), CreateGameResult.class);
     }
-    public ListGamesResponse listGames(){
-        return null;
+    public ListGamesResponse listGames() throws Exception {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("authorization", authToken)
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("List games failed: " + response.body());
+        }
+
+        return gson.fromJson(response.body(), ListGamesResponse.class);
     }
     public void joinGame(int gameId, String playerColor){
 
