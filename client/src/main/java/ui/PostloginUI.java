@@ -39,14 +39,14 @@ public class PostloginUI implements UI {
                     return null;
                 }
                 case "join" -> {
-                    if (parts.length != 2) {
+                    if (parts.length != 3) {
                         System.out.println("Usage: join <ID> [WHITE|BLACK]");
                         break;
                     }
                     return null;
                 }
                 case "observe" -> {
-                    if (parts.length != 1) {
+                    if (parts.length != 2) {
                         System.out.println("Usage: observe < ID>");
                         break;
                     }
