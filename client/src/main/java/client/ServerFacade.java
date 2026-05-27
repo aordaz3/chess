@@ -1,6 +1,7 @@
 package client;
 
 import model.AuthData;
+import model.ListGamesResponse;
 
 public class ServerFacade {
 
@@ -23,16 +24,16 @@ public class ServerFacade {
     public void logout(){
         //create request
     }
-    public void createGame(){
+    public void createGame(String gameName){
         //create request
     }
-    public void listGames(){
+    public ListGamesResponse listGames(){
 
     }
-    public void playGame(){
+    public void joinGame(int gameId, String playerColor){
 
     }
-    public void observeGame(){
+    public void observeGame(int gameId){
 
     }
 }

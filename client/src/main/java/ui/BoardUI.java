@@ -4,6 +4,8 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
+import client.ServerFacade;
+import model.AuthData;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +31,18 @@ public class BoardUI implements UI{
     private static final String WHITE_BISHOP = " B ";
     private static final String WHITE_QUEEN = " Q ";
     private static final String WHITE_KING = " K ";
+
+    private final ServerFacade server;
+    private final AuthData auth;
+    private final Integer gameID;
+    private final String role;
+
+    public BoardUI(ServerFacade server, AuthData authdata, Integer gameID, String role){
+        this.server = server;
+        this.auth = authdata;
+        this.gameID = gameID;
+        this.role = role;
+    }
 
     public UI run() {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);

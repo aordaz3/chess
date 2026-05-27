@@ -40,6 +40,7 @@ public class UserHandler {
         CreateGameRequest request = ctx.bodyAsClass(CreateGameRequest.class);
         CreateGameResult result = userService.createGame(authToken, request);
         ctx.status(200).json(result);
+
     }
 
     public void joinGame(Context ctx) throws DataAccessException {

@@ -11,94 +11,118 @@ public class PostloginUI implements UI {
     private final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
     private final ServerFacade server;
     private final AuthData authData;
-    public PostloginUI(ServerFacade server, AuthData auth) {
+
+    public PostloginUI(ServerFacade server, AuthData authData) {
         this.server = server;
-        authData = auth;
+        this.authData = authData;
     }
 
     @Override
     public UI run() {
-        System.out.println("WELMCOME <USERNAME>. TYPE HELP TO GET STARTED.");
-        while (true){
-            System.out.println("[LOGGED_IN]>>>>");
+        System.out.println("WELCOME " + authData.username() + ". TYPE HELP TO GET STARTED.");
+
+        while (true) {
+            System.out.print("[LOGGED_IN] >>> ");
+
             String input;
-            try{
+            try {
                 input = in.readLine();
             }
-            catch (IOException e){
-                System.out.println("Input Error");
+            catch (IOException e) {
+                System.out.println("Input error.");
                 return this;
             }
-            if(input == null){
+            if (input == null) {
                 return null;
             }
-            if(input.isEmpty()){
+            input = input.trim();
+            if (input.isEmpty()) {
                 continue;
             }
+
             String[] parts = input.split("\\s+");
             String command = parts[0].toLowerCase();
-            switch (command){
+
+            switch (command) {
                 case "help" -> printHelp();
+
                 case "list" -> {
                     try {
-                        server.listGames();
+                        System.out.println(server.listGames());
                     }
-                    catch (Exception e){
-                        System.out.println("List Failed: " + e.getMessage());
+                    catch (Exception e) {
+                        System.out.println("List failed: " + e.getMessage());
                     }
                 }
+
+                case "create" -> {
+                    if (parts.length != 2) {
+                        System.out.println("Usage: create <NAME>");
+                        break;
+                    }
+                    try {
+                        server.createGame(parts[1]);
+                        System.out.println("Game created.");
+                    }
+                    catch (Exception e) {
+                        System.out.println("Create failed: " + e.getMessage());
+                    }
+                }
+
                 case "join" -> {
                     if (parts.length != 3) {
-                        System.out.println("Usage: join <ID> [WHITE|BLACK]");
+                        System.out.println("Usage: join <ID> <WHITE|BLACK>");
                         break;
                     }
-                    String ID = parts[1];
-                    String color = parts[2];
                     try {
-                        server.playGame();
-                        return new BoardUI();
+                        int gameId = Integer.parseInt(parts[1]);
+                        String color = parts[2].toUpperCase();
+                        server.joinGame(gameId, color);
+                        return new BoardUI(server, authData, gameId, color);
                     }
-                    catch (Exception e){
-                        System.out.println("Play Failed: " + e.getMessage());
+                    catch (Exception e) {
+                        System.out.println("Join failed: " + e.getMessage());
                     }
                 }
+
                 case "observe" -> {
                     if (parts.length != 2) {
-                        System.out.println("Usage: observe < ID>");
+                        System.out.println("Usage: observe <ID>");
                         break;
                     }
-                    String ID = parts[1];
                     try {
-                        server.observeGame();
+                        int gameId = Integer.parseInt(parts[1]);
+                        return new BoardUI(server, authData, gameId, "OBSERVER");
                     }
-                    catch (Exception e){
-                        System.out.println("Observe Failed: " + e.getMessage());
+                    catch (Exception e) {
+                        System.out.println("Observe failed: " + e.getMessage());
                     }
                 }
                 case "logout" -> {
                     try {
                         server.logout();
+                        return new PreloginUI(server);
                     }
-                    catch (Exception e){
-                        System.out.println("Logout Failed: " + e.getMessage());
+                    catch (Exception e) {
+                        System.out.println("Logout failed: " + e.getMessage());
                     }
-                    return new PreloginUI(server);
                 }
                 case "quit" -> {
                     System.out.println("Goodbye.");
-                    System.exit(0);
+                    return null;
                 }
+                default -> System.out.println("Unknown command. Type Help.");
             }
         }
-
     }
-    private void printHelp(){
+
+    private void printHelp() {
         System.out.println("create <NAME> - a game " +
-                        "\nlist - games " +
-                        "\njoin <ID> [WHITE|BLACK] - a game " +
-                        "\nobserve < ID> - a game " +
-                        "\nlogout - when you are done " +
-                        "\nquit - playing chess " +
-                        "\nhelp - with possible commands");
+                "\nlist - games " +
+                "\njoin <ID> [WHITE|BLACK] - a game " +
+                "\nobserve < ID> - a game " +
+                "\nlogout - when you are done " +
+                "\nquit - playing chess " +
+                "\nhelp - with possible commands");
     }
 }
