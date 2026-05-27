@@ -50,12 +50,16 @@ public class BoardUI implements UI{
         out.print(ERASE_SCREEN);
         out.print(RESET_BG_COLOR);
         out.print(RESET_TEXT_COLOR);
+
         ChessBoard board = new ChessBoard();
         board.resetBoard();
 
-        ChessGame.TeamColor perspective = ChessGame.TeamColor.BLACK;
+        ChessGame.TeamColor perspective = switch (role.toUpperCase()) {
+            case "BLACK" -> ChessGame.TeamColor.BLACK;
+            default -> ChessGame.TeamColor.WHITE;
+        };
         drawChessBoard(out, board, perspective);
-        return null;
+        return new PostloginUI(server, auth);
     }
 
 

@@ -93,7 +93,7 @@ public class PostloginUI implements UI {
                     try {
                         int gameId = Integer.parseInt(parts[1]);
                         server.observeGame(gameId);
-                        return new BoardUI(server, authData, gameId, "OBSERVER");
+                        return new BoardUI(server, authData, gameId, "WHITE");
                     }
                     catch (Exception e) {
                         System.out.println("Observe failed: " + e.getMessage());
