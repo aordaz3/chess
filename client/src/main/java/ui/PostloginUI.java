@@ -13,6 +13,7 @@ public class PostloginUI implements UI {
     private final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
     private final ServerFacade server;
     private final AuthData authData;
+    private List<GamesSummary> lastListedGames = new ArrayList<>();
 
     public PostloginUI(ServerFacade server, AuthData authData) {
         this.server = server;
@@ -51,20 +52,20 @@ public class PostloginUI implements UI {
                 case "list" -> {
                     try {
                         ListGamesResponse response = server.listGames();
-                        List<GamesSummary> games = new ArrayList<>(response.games());
-                        if (games == null || games.isEmpty()) {
+                        lastListedGames = (List<GamesSummary>) response.games();
+
+                        if (lastListedGames.isEmpty()) {
                             System.out.println("No games available.");
                             break;
                         }
-
-                        for (int i = 0; i < games.size(); i++) {
-                            GamesSummary game = games.get(i);
-
+                        for (int i = 0; i < lastListedGames.size(); i++) {
+                            GamesSummary game = lastListedGames.get(i);
                             System.out.println((i + 1) + ". " + game.gameName()
                                     + " | White: " + (game.whiteUsername() == null ? "-" : game.whiteUsername())
                                     + " | Black: " + (game.blackUsername() == null ? "-" : game.blackUsername()));
                         }
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         System.out.println("List failed: " + e.getMessage());
                     }
                 }
@@ -85,14 +86,25 @@ public class PostloginUI implements UI {
 
                 case "join" -> {
                     if (parts.length != 3) {
-                        System.out.println("Usage: join <ID> <WHITE|BLACK>");
+                        System.out.println("Usage: join <NUMBER> <WHITE|BLACK>");
                         break;
                     }
                     try {
-                        int gameId = Integer.parseInt(parts[1]);
+                        int selection = Integer.parseInt(parts[1]);
                         String color = parts[2].toUpperCase();
-                        server.joinGame(gameId, color);
-                        return new BoardUI(server, authData, gameId, color);
+
+                        if (selection < 1 || selection > lastListedGames.size()) {
+                            System.out.println("Invalid game number.");
+                            break;
+                        }
+
+                        GamesSummary game = lastListedGames.get(selection - 1);
+                        server.joinGame(game.gameID(), color);
+
+                        return new BoardUI(server, authData, game.gameID(), color);
+                    }
+                    catch (NumberFormatException e) {
+                        System.out.println("Please enter a valid number.");
                     }
                     catch (Exception e) {
                         System.out.println("Join failed: " + e.getMessage());
