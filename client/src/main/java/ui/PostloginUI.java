@@ -92,6 +92,7 @@ public class PostloginUI implements UI {
                     }
                     try {
                         int gameId = Integer.parseInt(parts[1]);
+                        server.observeGame(gameId);
                         return new BoardUI(server, authData, gameId, "OBSERVER");
                     }
                     catch (Exception e) {

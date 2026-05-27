@@ -42,12 +42,36 @@ public class ServerFacade {
     }
 
     public AuthData register(String username, String password, String email) throws Exception {
-        // create request object
-        return null;
+        RegisterRequest request = new RegisterRequest(username, password, email);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/user"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
+                .build();
+
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Register failed: " + response.body());
+        }
+
+        RegisterResult result = gson.fromJson(response.body(), RegisterResult.class);
+        authToken = result.authToken();
+        return new AuthData(result.authToken(), result.username());
     }
 
-    public void logout(){
-        //create request
+    public void logout() throws Exception {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/session"))
+                .header("authorization", authToken)
+                .DELETE()
+                .build();
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new Exception("Logout failed: " + response.body());
+        }
+        authToken = null;
     }
     public void createGame(String gameName){
         //create request
