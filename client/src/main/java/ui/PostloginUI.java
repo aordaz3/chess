@@ -9,7 +9,11 @@ import java.io.InputStreamReader;
 
 public class PostloginUI implements UI {
     private final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    private final ServerFacade server;
+    private final AuthData authData;
     public PostloginUI(ServerFacade server, AuthData auth) {
+        this.server = server;
+        authData = auth;
     }
 
     @Override
@@ -36,24 +40,50 @@ public class PostloginUI implements UI {
             switch (command){
                 case "help" -> printHelp();
                 case "list" -> {
-                    return null;
+                    try {
+                        server.listGames();
+                    }
+                    catch (Exception e){
+                        System.out.println("List Failed: " + e.getMessage());
+                    }
                 }
                 case "join" -> {
                     if (parts.length != 3) {
                         System.out.println("Usage: join <ID> [WHITE|BLACK]");
                         break;
                     }
-                    return null;
+                    String ID = parts[1];
+                    String color = parts[2];
+                    try {
+                        server.playGame();
+                        return new BoardUI();
+                    }
+                    catch (Exception e){
+                        System.out.println("Play Failed: " + e.getMessage());
+                    }
                 }
                 case "observe" -> {
                     if (parts.length != 2) {
                         System.out.println("Usage: observe < ID>");
                         break;
                     }
-                    return null;
+                    String ID = parts[1];
+                    try {
+                        server.observeGame();
+                    }
+                    catch (Exception e){
+                        System.out.println("Observe Failed: " + e.getMessage());
+                    }
                 }
                 case "logout" -> {
-                    return null;}
+                    try {
+                        server.logout();
+                    }
+                    catch (Exception e){
+                        System.out.println("Logout Failed: " + e.getMessage());
+                    }
+                    return new PreloginUI(server);
+                }
                 case "quit" -> {
                     System.out.println("Goodbye.");
                     System.exit(0);
