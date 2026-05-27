@@ -104,10 +104,22 @@ public class ServerFacade {
 
         return gson.fromJson(response.body(), ListGamesResponse.class);
     }
-    public void joinGame(int gameId, String playerColor){
+    public void joinGame(int gameId, String playerColor) throws Exception {
+        JoinGameRequest request = new JoinGameRequest(playerColor, gameId);
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("authorization", authToken)
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
+                .build();
 
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Join game failed: " + response.body());
+        }
     }
     public void observeGame(int gameId){
-
+        return;
     }
 }
