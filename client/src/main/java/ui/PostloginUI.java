@@ -1,11 +1,13 @@
 package ui;
 
 import client.ServerFacade;
-import model.AuthData;
+import model.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PostloginUI implements UI {
     private final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -48,9 +50,21 @@ public class PostloginUI implements UI {
 
                 case "list" -> {
                     try {
-                        System.out.println(server.listGames());
-                    }
-                    catch (Exception e) {
+                        ListGamesResponse response = server.listGames();
+                        List<GamesSummary> games = new ArrayList<>(response.games());
+                        if (games == null || games.isEmpty()) {
+                            System.out.println("No games available.");
+                            break;
+                        }
+
+                        for (int i = 0; i < games.size(); i++) {
+                            GamesSummary game = games.get(i);
+
+                            System.out.println((i + 1) + ". " + game.gameName()
+                                    + " | White: " + (game.whiteUsername() == null ? "-" : game.whiteUsername())
+                                    + " | Black: " + (game.blackUsername() == null ? "-" : game.blackUsername()));
+                        }
+                    } catch (Exception e) {
                         System.out.println("List failed: " + e.getMessage());
                     }
                 }
