@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 import static ui.EscapeSequences.*;
 
-public class BoardUI {
+public class BoardUI implements UI{
     private static final int BOARD_SIZE_IN_SQUARES = 8;
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 1;
     private static final int LINE_WIDTH_IN_PADDED_CHARS = 1;
@@ -30,7 +30,7 @@ public class BoardUI {
     private static final String WHITE_QUEEN = " Q ";
     private static final String WHITE_KING = " K ";
 
-    public static void main(String[] args) {
+    public UI run() {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         out.print(ERASE_SCREEN);
@@ -41,6 +41,7 @@ public class BoardUI {
 
         ChessGame.TeamColor perspective = ChessGame.TeamColor.BLACK;
         drawChessBoard(out, board, perspective);
+        return null;
     }
 
 
