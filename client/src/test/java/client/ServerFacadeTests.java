@@ -1,5 +1,6 @@
 package client;
 
+import model.AuthData;
 import org.junit.jupiter.api.*;
 import server.Server;
 
@@ -11,7 +12,6 @@ import java.net.http.HttpResponse;
 
 
 public class ServerFacadeTests {
-
     private static Server server;
     private static int port;
     private static String serverUrl;
@@ -42,8 +42,22 @@ public class ServerFacadeTests {
         facade = new ServerFacade(serverUrl);
     }
     @Test
-    public void sampleTest() {
-        Assertions.assertTrue(true);
+    public void registerPositive() throws Exception {
+        AuthData auth = facade.register("player1", "password", "p1@email.com");
+        Assertions.assertNotNull(auth);
+        Assertions.assertNotNull(auth.authToken());
+        Assertions.assertFalse(auth.authToken().isBlank());
+        Assertions.assertEquals("player1", auth.username());
+    }
+
+    @Test
+    public void registerNegativeDuplicateUsername() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        Exception ex = Assertions.assertThrows(Exception.class, () ->
+                facade.register("player1", "differentPassword", "p2@email.com"));
+        Assertions.assertTrue(ex.getMessage().toLowerCase().contains("register failed")
+                || ex.getMessage().toLowerCase().contains("already taken")
+                || ex.getMessage().toLowerCase().contains("bad request"));
     }
 
 }
