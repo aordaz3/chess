@@ -15,7 +15,7 @@ public class ServerFacadeTests {
     private static Server server;
     private static int port;
     private static String serverUrl;
-    private static final HttpClient client = HttpClient.newHttpClient();
+    private static final HttpClient CLIENT = HttpClient.newHttpClient();
     private ServerFacade facade;
 
     @BeforeAll
@@ -37,7 +37,7 @@ public class ServerFacadeTests {
                 .DELETE()
                 .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         Assertions.assertEquals(200, response.statusCode());
         facade = new ServerFacade(serverUrl);
     }
