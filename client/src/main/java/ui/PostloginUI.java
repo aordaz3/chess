@@ -59,11 +59,7 @@ public class PostloginUI implements UI {
             }
         }
     }
-//    private UI checkNextNull(UI next){
-//        if(next != null){
-//            return next;
-//        }
-//    }
+
     private String readInput() {
         try {
             return in.readLine();
