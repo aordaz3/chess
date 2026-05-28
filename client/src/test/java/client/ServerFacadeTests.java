@@ -87,8 +87,8 @@ public class ServerFacadeTests {
     public void logoutNegative() {
         //hmmm
     }
-    @Test
 
+    @Test
     public void createGamePositive() throws Exception {
         facade.register("player1", "password", "p1@email.com");
         CreateGameResult result = facade.createGame("game1");
@@ -97,8 +97,47 @@ public class ServerFacadeTests {
     }
 
     @Test
-
     public void createGameNegativeWithoutLogin() {
         //?
+    }
+
+    @Test
+    public void listGamesPositive() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        facade.createGame("game1");
+        facade.createGame("game2");
+        ListGamesResponse response = facade.listGames();
+
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.games());
+        Assertions.assertEquals(2, response.games().size());
+
+        boolean foundGame1 = response.games().stream().anyMatch(g -> g.gameName().equals("game1"));
+        boolean foundGame2 = response.games().stream().anyMatch(g -> g.gameName().equals("game2"));
+
+        Assertions.assertTrue(foundGame1);
+        Assertions.assertTrue(foundGame2);
+    }
+
+    @Test
+    public void listGamesNegative() throws Exception{
+
+    }
+
+    @Test
+    public void joinGamePositive() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        CreateGameResult result = facade.createGame("game1");
+        Assertions.assertDoesNotThrow(() -> facade.joinGame(result.gameID(), "WHITE"));
+    }
+
+    @Test
+    public void joinGameNegativeBadGameId() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        Exception ex = Assertions.assertThrows(Exception.class, () ->
+                facade.joinGame(999999, "WHITE"));
+        Assertions.assertTrue(ex.getMessage().toLowerCase().contains("join game failed")
+                                    || ex.getMessage().toLowerCase().contains("bad request")
+                                    || ex.getMessage().toLowerCase().contains("unauthorized"));
     }
 }
