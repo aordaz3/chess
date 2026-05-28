@@ -77,4 +77,14 @@ public class ServerFacadeTests {
         Assertions.assertTrue(ex.getMessage().toLowerCase().contains("login failed")
                                     || ex.getMessage().toLowerCase().contains("unauthorized"));
     }
+    @Test
+    public void logoutPositive() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        Assertions.assertDoesNotThrow(() -> facade.logout());
+    }
+
+    @Test
+    public void logoutNegative() {
+        //hmmm
+    }
 }
