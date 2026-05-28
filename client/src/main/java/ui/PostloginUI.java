@@ -23,116 +23,33 @@ public class PostloginUI implements UI {
     @Override
     public UI run() {
         System.out.println("WELCOME " + authData.username() + ". TYPE HELP TO GET STARTED.");
-
         while (true) {
             System.out.print("[LOGGED_IN] >>> ");
-
-            String input;
-            try {
-                input = in.readLine();
-            }
-            catch (IOException e) {
-                System.out.println("Input error.");
-                return this;
-            }
+            String input = readInput();
             if (input == null) {
                 return null;
             }
             input = input.trim();
-            if (input.isEmpty()) {
+            if (input.isEmpty()){
                 continue;
             }
-
             String[] parts = input.split("\\s+");
             String command = parts[0].toLowerCase();
-
             switch (command) {
                 case "help" -> printHelp();
-
-                case "list" -> {
-                    try {
-                        ListGamesResponse response = server.listGames();
-                        lastListedGames = (List<GamesSummary>) response.games();
-
-                        if (lastListedGames.isEmpty()) {
-                            System.out.println("No games available.");
-                            break;
-                        }
-                        for (int i = 0; i < lastListedGames.size(); i++) {
-                            GamesSummary game = lastListedGames.get(i);
-                            System.out.println((i + 1) + ". " + game.gameName()
-                                    + " | White: " + (game.whiteUsername() == null ? "-" : game.whiteUsername())
-                                    + " | Black: " + (game.blackUsername() == null ? "-" : game.blackUsername()));
-                        }
-                    }
-                    catch (Exception e) {
-                        System.out.println("List failed: " + e.getMessage());
-                    }
-                }
-
-                case "create" -> {
-                    if (parts.length != 2) {
-                        System.out.println("Usage: create <NAME>");
-                        break;
-                    }
-                    try {
-                        server.createGame(parts[1]);
-                        System.out.println("Game created.");
-                    }
-                    catch (Exception e) {
-                        System.out.println("Create failed: " + e.getMessage());
-                    }
-                }
-
+                case "list" -> handleList();
+                case "create" -> handleCreate(parts);
                 case "join" -> {
-                    if (parts.length != 3) {
-                        System.out.println("Usage: join <NUMBER> <WHITE|BLACK>");
-                        break;
-                    }
-                    try {
-                        int selection = Integer.parseInt(parts[1]);
-                        String color = parts[2].toUpperCase();
-
-                        if (selection < 1 || selection > lastListedGames.size()) {
-                            System.out.println("Invalid game number.");
-                            break;
-                        }
-
-                        GamesSummary game = lastListedGames.get(selection - 1);
-                        server.joinGame(game.gameID(), color);
-
-                        return new BoardUI(server, authData, game.gameID(), color);
-                    }
-                    catch (NumberFormatException e) {
-                        System.out.println("Please enter a valid number.");
-                    }
-                    catch (Exception e) {
-                        System.out.println("Join failed: " + e.getMessage());
-                    }
+                    UI next = handleJoin(parts);
+                    if (next != null){return next;}
                 }
-
                 case "observe" -> {
-                    if (parts.length != 2) {
-                        System.out.println("Usage: observe <ID>");
-                        break;
-                    }
-                    try {
-                        int gameId = Integer.parseInt(parts[1]);
-                        server.observeGame(gameId);
-                        return new BoardUI(server, authData, gameId, "WHITE");
-                    }
-                    catch (Exception e) {
-                        System.out.println("Observe failed: " + e.getMessage());
-                    }
+                    UI next = handleObserve(parts);
+                    if (next != null){return next;}
                 }
                 case "logout" -> {
-                    try {
-                        server.logout();
-                        return new PreloginUI(server);
-                    }
-                    catch (Exception e) {
-                        System.out.println("Logout failed: " + e.getMessage());
-                    }
+                    UI next = handleLogout();
+                    if (next != null) {return next;}
                 }
                 case "quit" -> {
                     System.out.println("Goodbye.");
@@ -140,6 +57,113 @@ public class PostloginUI implements UI {
                 }
                 default -> System.out.println("Unknown command. Type Help.");
             }
+        }
+    }
+//    private UI checkNextNull(UI next){
+//        if(next != null){
+//            return next;
+//        }
+//    }
+    private String readInput() {
+        try {
+            return in.readLine();
+        }
+        catch (IOException e) {
+            System.out.println("Input error.");
+            return null;
+        }
+    }
+
+    private void handleList() {
+        try {
+            ListGamesResponse response = server.listGames();
+            lastListedGames = (List<GamesSummary>) response.games();
+
+            if (lastListedGames.isEmpty()) {
+                System.out.println("No games available.");
+                return;
+            }
+
+            for (int i = 0; i < lastListedGames.size(); i++) {
+                GamesSummary game = lastListedGames.get(i);
+                System.out.println((i + 1) + ". " + game.gameName()
+                        + " | White: " + (game.whiteUsername() == null ? "-" : game.whiteUsername())
+                        + " | Black: " + (game.blackUsername() == null ? "-" : game.blackUsername()));
+            }
+        }
+        catch (Exception e) {
+            System.out.println("List failed: " + e.getMessage());
+        }
+    }
+
+    private void handleCreate(String[] parts) {
+        if (parts.length != 2) {
+            System.out.println("Usage: create <NAME>");
+            return;
+        }
+
+        try {
+            server.createGame(parts[1]);
+            System.out.println("Game created.");
+        }
+        catch (Exception e) {
+            System.out.println("Create failed: " + e.getMessage());
+        }
+    }
+
+    private UI handleJoin(String[] parts) {
+        if (parts.length != 3) {
+            System.out.println("Usage: join <NUMBER> <WHITE|BLACK>");
+            return null;
+        }
+
+        try {
+            int selection = Integer.parseInt(parts[1]);
+            String color = parts[2].toUpperCase();
+
+            if (selection < 1 || selection > lastListedGames.size()) {
+                System.out.println("Invalid game number.");
+                return null;
+            }
+
+            GamesSummary game = lastListedGames.get(selection - 1);
+            server.joinGame(game.gameID(), color);
+            return new BoardUI(server, authData, game.gameID(), color);
+        }
+        catch (NumberFormatException e) {
+            System.out.println("Please enter a valid number.");
+        }
+        catch (Exception e) {
+            System.out.println("Join failed: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private UI handleObserve(String[] parts) {
+        if (parts.length != 2) {
+            System.out.println("Usage: observe <ID>");
+            return null;
+        }
+
+        try {
+            int gameId = Integer.parseInt(parts[1]);
+            server.observeGame(gameId);
+            return new BoardUI(server, authData, gameId, "WHITE");
+        }
+        catch (Exception e) {
+            System.out.println("Observe failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private UI handleLogout() {
+        try {
+            server.logout();
+            return new PreloginUI(server);
+        }
+        catch (Exception e) {
+            System.out.println("Logout failed: " + e.getMessage());
+            return null;
         }
     }
 
