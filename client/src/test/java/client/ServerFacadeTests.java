@@ -85,7 +85,8 @@ public class ServerFacadeTests {
 
     @Test
     public void logoutNegative() {
-        //hmmm
+        Exception ex = Assertions.assertThrows(Exception.class, () -> facade.logout());
+        Assertions.assertNotNull(ex.getMessage());
     }
 
     @Test
@@ -98,7 +99,8 @@ public class ServerFacadeTests {
 
     @Test
     public void createGameNegativeWithoutLogin() {
-        //?
+        Exception ex = Assertions.assertThrows(Exception.class, () -> facade.createGame("game1"));
+        Assertions.assertNotNull(ex.getMessage());
     }
 
     @Test
@@ -120,8 +122,9 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void listGamesNegative() throws Exception{
-
+    public void listGamesNegative() {
+        Exception ex = Assertions.assertThrows(Exception.class, () -> facade.listGames());
+        Assertions.assertNotNull(ex.getMessage());
     }
 
     @Test
