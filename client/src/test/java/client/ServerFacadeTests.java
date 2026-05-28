@@ -1,6 +1,6 @@
 package client;
 
-import model.AuthData;
+import model.*;
 import org.junit.jupiter.api.*;
 import server.Server;
 
@@ -86,5 +86,19 @@ public class ServerFacadeTests {
     @Test
     public void logoutNegative() {
         //hmmm
+    }
+    @Test
+
+    public void createGamePositive() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        CreateGameResult result = facade.createGame("game1");
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.gameID() > 0);
+    }
+
+    @Test
+
+    public void createGameNegativeWithoutLogin() {
+        //?
     }
 }
