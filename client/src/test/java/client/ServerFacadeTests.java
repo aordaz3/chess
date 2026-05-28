@@ -56,8 +56,25 @@ public class ServerFacadeTests {
         Exception ex = Assertions.assertThrows(Exception.class, () ->
                 facade.register("player1", "differentPassword", "p2@email.com"));
         Assertions.assertTrue(ex.getMessage().toLowerCase().contains("register failed")
-                || ex.getMessage().toLowerCase().contains("already taken")
-                || ex.getMessage().toLowerCase().contains("bad request"));
+                                    || ex.getMessage().toLowerCase().contains("already taken")
+                                    || ex.getMessage().toLowerCase().contains("bad request"));
+    }
+    @Test
+    public void loginPositive() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        AuthData auth = facade.login("player1", "password");
+        Assertions.assertNotNull(auth);
+        Assertions.assertNotNull(auth.authToken());
+        Assertions.assertFalse(auth.authToken().isBlank());
+        Assertions.assertEquals("player1", auth.username());
     }
 
+    @Test
+    public void loginNegativeWrongPassword() throws Exception {
+        facade.register("player1", "password", "p1@email.com");
+        Exception ex = Assertions.assertThrows(Exception.class, () ->
+                facade.login("player1", "wrongpassword"));
+        Assertions.assertTrue(ex.getMessage().toLowerCase().contains("login failed")
+                                    || ex.getMessage().toLowerCase().contains("unauthorized"));
+    }
 }
