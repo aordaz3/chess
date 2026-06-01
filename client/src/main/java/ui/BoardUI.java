@@ -108,7 +108,6 @@ public class BoardUI implements UI{
     }
 
     private static void drawRow(PrintStream out, ChessBoard board, int boardRow, ChessGame.TeamColor perspective) {
-        int displayRow = (perspective == ChessGame.TeamColor.WHITE) ? boardRow : 7 - boardRow;
         int chessRow = (perspective == ChessGame.TeamColor.WHITE) ? 8 - boardRow : boardRow + 1;
 
         out.print(RESET_BG_COLOR);
@@ -118,7 +117,7 @@ public class BoardUI implements UI{
         for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
             int boardCol = (perspective == ChessGame.TeamColor.WHITE) ? col : 7 - col;
 
-            boolean isWhiteSquare = (displayRow + col) % 2 == 0;
+            boolean isWhiteSquare = (boardRow + col) % 2 == 0;
             if (isWhiteSquare) {
                 setWhite(out);
             }

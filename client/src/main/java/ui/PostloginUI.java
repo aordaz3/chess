@@ -137,14 +137,30 @@ public class PostloginUI implements UI {
 
     private UI handleObserve(String[] parts) {
         if (parts.length != 2) {
-            System.out.println("Usage: observe <ID>");
+            System.out.println("Usage: observe <NUMBER>");
+            return null;
+        }
+        int choice;
+        try {
+            choice = Integer.parseInt(parts[1]);
+        }
+        catch (NumberFormatException e) {
+            System.out.println("Usage: observe <NUMBER>");
             return null;
         }
 
         try {
-            int gameId = Integer.parseInt(parts[1]);
-            server.observeGame(gameId);
-            return new BoardUI(server, authData, gameId, "WHITE");
+            ListGamesResponse games = server.listGames();
+            List<GamesSummary> gameList = new java.util.ArrayList<>(games.games());
+
+            if (choice < 1 || choice > gameList.size()) {
+                System.out.println("Invalid game number.");
+                return null;
+            }
+
+            int actualGameId = gameList.get(choice - 1).gameID();
+            server.observeGame(actualGameId);
+            return new BoardUI(server, authData, actualGameId, "WHITE");
         }
         catch (Exception e) {
             System.out.println("Observe failed: " + e.getMessage());

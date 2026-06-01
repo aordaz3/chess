@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 public class ServerFacade {
 
@@ -32,13 +33,11 @@ public class ServerFacade {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() != 200) {
-            throw new Exception("Login failed: " + response.body());
-        }
+        throwIfError(response);
 
-        LoginResult result = gson.fromJson(response.body(), LoginResult.class);
-        authToken = result.authToken();
-        return new AuthData(result.authToken(), result.username());
+        AuthData auth = gson.fromJson(response.body(), AuthData.class);
+        authToken = auth.authToken();
+        return auth;
     }
 
     public AuthData register(String username, String password, String email) throws Exception {
@@ -52,13 +51,11 @@ public class ServerFacade {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() != 200) {
-            throw new Exception("Register failed: " + response.body());
-        }
+        throwIfError(response);
 
-        RegisterResult result = gson.fromJson(response.body(), RegisterResult.class);
-        authToken = result.authToken();
-        return new AuthData(result.authToken(), result.username());
+        AuthData auth = gson.fromJson(response.body(), AuthData.class);
+        authToken = auth.authToken();
+        return auth;
     }
 
     public void logout() throws Exception {
@@ -67,10 +64,11 @@ public class ServerFacade {
                 .header("authorization", authToken)
                 .DELETE()
                 .build();
+
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) {
-            throw new Exception("Logout failed: " + response.body());
-        }
+
+        throwIfError(response);
+
         authToken = null;
     }
     public CreateGameResult createGame(String gameName) throws Exception {
@@ -84,9 +82,8 @@ public class ServerFacade {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() != 200) {
-            throw new Exception("Create game failed: " + response.body());
-        }
+        throwIfError(response);
+
         return gson.fromJson(response.body(), CreateGameResult.class);
     }
     public ListGamesResponse listGames() throws Exception {
@@ -98,9 +95,7 @@ public class ServerFacade {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() != 200) {
-            throw new Exception("List games failed: " + response.body());
-        }
+        throwIfError(response);
 
         return gson.fromJson(response.body(), ListGamesResponse.class);
     }
@@ -115,11 +110,24 @@ public class ServerFacade {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() != 200) {
-            throw new Exception("Join game failed: " + response.body());
-        }
+        throwIfError(response);
     }
-    public void observeGame(int gameId){
-        return;
+
+    public void observeGame(int gameId) throws Exception {
+        ListGamesResponse games = listGames();
+
+        for (GamesSummary game : games.games()) {
+            if (game.gameID() == gameId) {
+                return;
+            }
+        }
+        throw new Exception("Error: game not found");
+    }
+
+    private void throwIfError(HttpResponse<String> response) throws Exception {
+        if (response.statusCode() != 200) {
+            ErrorResponse error = gson.fromJson(response.body(), ErrorResponse.class);
+            throw new Exception(error.message());
+        }
     }
 }
