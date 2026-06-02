@@ -7,12 +7,14 @@ import chess.ChessPosition;
 import client.ServerFacade;
 import model.AuthData;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
 import static ui.EscapeSequences.*;
 
-public class BoardUI implements UI{
+public class GamePlayUI implements UI{
     private static final int BOARD_SIZE_IN_SQUARES = 8;
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 1;
     private static final int LINE_WIDTH_IN_PADDED_CHARS = 1;
@@ -36,30 +38,101 @@ public class BoardUI implements UI{
     private final AuthData auth;
     private final Integer gameID;
     private final String role;
+    private final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    private ChessGame game;
+    private boolean isRunning = true;
+    private final ChessGame.TeamColor perspective;
 
-    public BoardUI(ServerFacade server, AuthData authdata, Integer gameID, String role){
+    public GamePlayUI(ServerFacade server, AuthData authdata, Integer gameID, String role) {
         this.server = server;
         this.auth = authdata;
         this.gameID = gameID;
         this.role = role;
+        this.perspective = ("BLACK".equalsIgnoreCase(role)) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
     }
 
+    @Override
     public UI run() {
-        var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
+        refreshGame();
+        redrawBoard();
 
-        out.print(ERASE_SCREEN);
-        out.print(RESET_BG_COLOR);
-        out.print(RESET_TEXT_COLOR);
+        while (isRunning) {
+            try {
+                System.out.print("Enter command or help for hints: ");
+                String command = in.readLine();
+                if (command == null) {
+                    return new PostloginUI(server, auth);
+                }
 
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
+                switch (command.toLowerCase()) {
+                    case "help" -> showHelp();
+                    case "redraw" -> redrawBoard();
+                    case "move" -> makeMove();
+                    case "leave" -> {
+                        return leaveGame();
+                    }
+                    case "resign" -> {
+                        UI next = resign();
+                        if (next != null) {
+                            return next;
+                        }
+                    }
+                    case "highlight" -> highlight();
+                    default -> System.out.println("Unknown command");
+                }
+            } catch (Exception e) {
+                System.out.println("Error reading input.");
+            }
+        }
 
-        ChessGame.TeamColor perspective = switch (role.toUpperCase()) {
-            case "BLACK" -> ChessGame.TeamColor.BLACK;
-            default -> ChessGame.TeamColor.WHITE;
-        };
-        drawChessBoard(out, board, perspective);
         return new PostloginUI(server, auth);
+    }
+
+    private void refreshGame() {
+        try {
+            //call server
+            System.out.println("made it");
+        }
+        catch (Exception e) {
+            System.out.println("Could not refresh game state.");
+        }
+    }
+
+    private void redrawBoard() {
+        refreshGame();
+        if (game == null || game.getBoard() == null) {
+            System.out.println("No game board available.");
+            return;
+        }
+        drawChessBoard(System.out, game.getBoard(), perspective);
+    }
+
+    private UI leaveGame() {
+        return new PostloginUI(server, auth);
+    }
+
+    private UI resign() {
+        return null;
+    }
+
+    private void makeMove() {
+
+    }
+
+    private void highlight() {
+
+    }
+    private void showHelp() {
+        System.out.println();
+        System.out.println("Help");
+        System.out.println("----");
+        System.out.println("Help: Displays text informing the user what actions they can take.");
+        System.out.println("Redraw Chess Board: Redraws the chess board upon request.");
+        System.out.println("Leave: Removes you from the game and returns to the post-login screen.");
+        System.out.println("Make Move: Prompts for a move and updates the board.");
+        System.out.println("Resign: Prompts for confirmation and ends the game if accepted.");
+        System.out.println("Highlight Legal Moves: Prompts for a piece and highlights its legal moves.");
+        System.out.println();
     }
 
 
