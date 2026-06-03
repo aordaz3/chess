@@ -1,65 +1,128 @@
 package client;
 
-import chess.ChessMove;
 import com.google.gson.Gson;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+import websocket.messages.ServerMessage;
 
+import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.WebSocket;
-import java.util.Objects;
-import java.util.concurrent.CompletionStage;
 
-public class WebSocketFacade {
+public class WebSocketFacade extends Endpoint {
 
+    public interface GameMessageHandler {
+        void onLoadGame(LoadGameMessage message);
+        void onNotification(NotificationMessage message);
+        void onError(ErrorMessage message);
+        void onClose();
+    }
 
-    private final String websocketUrl;
     private final Gson gson = new Gson();
-    private WebSocket webSocket;
+    private Session session;
+    private final String serverUrl;
+    private GameMessageHandler handler;
 
-    public WebSocketFacade(String websocketUrl) {
-        this.websocketUrl = websocketUrl;
+    public WebSocketFacade(String serverUrl) {
+        this.serverUrl = serverUrl;
     }
 
-    public void connect(String authToken, Integer gameID) throws Exception {
+    public void connect(String authToken, Integer gameID, GameMessageHandler handler) throws Exception {
+        this.handler = handler;
 
+        URI uri = new URI(serverUrl.replace("http", "ws") + "/ws");
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        session = container.connectToServer(this, uri);
+
+        session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(String message) {
+                handleMessage(message);
+            }
+        });
+
+        UserGameCommand connect = new UserGameCommand(
+                UserGameCommand.CommandType.CONNECT,
+                authToken,
+                gameID
+        );
+        send(connect);
     }
 
-    public void makeMove(String authToken, Integer gameID, ChessMove move) {
+    public void makeMove(String authToken, Integer gameID, chess.ChessMove move) throws IOException {
         MakeMoveCommand command = new MakeMoveCommand(authToken, gameID, move);
-        sendRaw(command);
+        send(command);
     }
 
-    public void leave(String authToken, Integer gameID) {
-        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameID);
-        sendRaw(command);
+    public void leave(String authToken, Integer gameID) throws IOException {
+        UserGameCommand command = new UserGameCommand(
+                UserGameCommand.CommandType.LEAVE,
+                authToken,
+                gameID
+        );
+        send(command);
         close();
     }
 
-    public void resign(String authToken, Integer gameID) {
-        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameID);
-        sendRaw(command);
+    public void resign(String authToken, Integer gameID) throws IOException {
+        UserGameCommand command = new UserGameCommand(
+                UserGameCommand.CommandType.RESIGN,
+                authToken,
+                gameID
+        );
+        send(command);
+    }
+
+    private void send(Object command) throws IOException {
+        if (session == null || !session.isOpen()) {
+            throw new IllegalStateException("WebSocket is not connected.");
+        }
+        session.getBasicRemote().sendText(gson.toJson(command));
+    }
+
+    private void handleMessage(String message) {
+        try {
+            ServerMessage base = gson.fromJson(message, ServerMessage.class);
+
+            switch (base.getServerMessageType()) {
+                case LOAD_GAME -> {
+                    LoadGameMessage load = gson.fromJson(message, LoadGameMessage.class);
+                    if (handler != null) handler.onLoadGame(load);
+                }
+                case NOTIFICATION -> {
+                    NotificationMessage note = gson.fromJson(message, NotificationMessage.class);
+                    if (handler != null) handler.onNotification(note);
+                }
+                case ERROR -> {
+                    ErrorMessage err = gson.fromJson(message, ErrorMessage.class);
+                    if (handler != null) handler.onError(err);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Could not parse websocket message: " + e.getMessage());
+        }
     }
 
     public void close() {
         try {
-            if (webSocket != null) {
-                webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "bye").join();
+            if (session != null && session.isOpen()) {
+                session.close();
             }
+        } catch (Exception e) {
+            System.out.println("Could not close websocket.");
         }
-        catch (Exception e) {
-            System.out.println("couldnt leave");
-        }
-
     }
 
-    private void sendRaw(Object command) {
-        if (webSocket == null) {
-            throw new IllegalStateException("WebSocket is not connected.");
-        }
-        String json = gson.toJson(command);
-        webSocket.sendText(json, true).join();
+    @Override
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
+        // required override; no-op
     }
-
 }
