@@ -144,7 +144,8 @@ public class GamePlayUI implements UI{
     }
 
     private void makeMove() {
-
+        var move = null;
+        ws.makeMove(auth.authToken(), gameID, move);
     }
 
     private void highlight() {

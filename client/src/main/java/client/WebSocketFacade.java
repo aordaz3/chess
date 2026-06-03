@@ -2,6 +2,7 @@ package client;
 
 import chess.ChessMove;
 import com.google.gson.Gson;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 
 import java.net.URI;
@@ -26,6 +27,8 @@ public class WebSocketFacade {
     }
 
     public void makeMove(String authToken, Integer gameID, ChessMove move) {
+        MakeMoveCommand command = new MakeMoveCommand(authToken, gameID, move);
+        sendRaw(command);
     }
 
     public void leave(String authToken, Integer gameID) {
@@ -35,7 +38,8 @@ public class WebSocketFacade {
     }
 
     public void resign(String authToken, Integer gameID) {
-
+        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameID);
+        sendRaw(command);
     }
 
     public void close() {
