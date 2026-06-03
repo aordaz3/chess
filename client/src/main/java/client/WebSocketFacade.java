@@ -123,6 +123,6 @@ public class WebSocketFacade extends Endpoint {
 
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
-        // required override; no-op
+        //umm
     }
 }
