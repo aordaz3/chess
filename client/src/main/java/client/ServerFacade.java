@@ -32,7 +32,6 @@ public class ServerFacade {
                 .build();
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
         throwIfError(response);
 
         AuthData auth = gson.fromJson(response.body(), AuthData.class);
@@ -50,7 +49,6 @@ public class ServerFacade {
                 .build();
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
         throwIfError(response);
 
         AuthData auth = gson.fromJson(response.body(), AuthData.class);
@@ -66,13 +64,14 @@ public class ServerFacade {
                 .build();
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
         throwIfError(response);
 
         authToken = null;
     }
+
     public CreateGameResult createGame(String gameName) throws Exception {
         CreateGameRequest request = new CreateGameRequest(gameName);
+
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(serverUrl + "/game"))
                 .header("authorization", authToken)
@@ -81,11 +80,11 @@ public class ServerFacade {
                 .build();
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
         throwIfError(response);
 
         return gson.fromJson(response.body(), CreateGameResult.class);
     }
+
     public ListGamesResponse listGames() throws Exception {
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(serverUrl + "/game"))
@@ -94,13 +93,14 @@ public class ServerFacade {
                 .build();
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
         throwIfError(response);
 
         return gson.fromJson(response.body(), ListGamesResponse.class);
     }
+
     public void joinGame(int gameId, String playerColor) throws Exception {
         JoinGameRequest request = new JoinGameRequest(playerColor, gameId);
+
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(serverUrl + "/game"))
                 .header("authorization", authToken)
@@ -109,7 +109,6 @@ public class ServerFacade {
                 .build();
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
         throwIfError(response);
     }
 
@@ -124,10 +123,23 @@ public class ServerFacade {
         throw new Exception("Error: game not found");
     }
 
+
     private void throwIfError(HttpResponse<String> response) throws Exception {
-        if (response.statusCode() != 200) {
-            ErrorResponse error = gson.fromJson(response.body(), ErrorResponse.class);
+        int code = response.statusCode();
+        if (code == 200 || code == 201 || code == 204) {
+            return;
+        }
+
+        String body = response.body();
+        if (body == null || body.isBlank()) {
+            throw new Exception("Request failed with status " + code);
+        }
+
+        try {
+            ErrorResponse error = gson.fromJson(body, ErrorResponse.class);
             throw new Exception(error.message());
+        } catch (Exception e) {
+            throw new Exception("Request failed with status " + code);
         }
     }
 }

@@ -5,6 +5,7 @@ import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import client.ServerFacade;
+import client.WebSocketFacade;
 import model.AuthData;
 
 import java.io.BufferedReader;
@@ -42,6 +43,7 @@ public class GamePlayUI implements UI{
     private ChessGame game;
     private boolean isRunning = true;
     private final ChessGame.TeamColor perspective;
+    private final WebSocketFacade ws;
 
     public GamePlayUI(ServerFacade server, AuthData authdata, Integer gameID, String role) {
         this.server = server;
@@ -49,6 +51,8 @@ public class GamePlayUI implements UI{
         this.gameID = gameID;
         this.role = role;
         this.perspective = ("BLACK".equalsIgnoreCase(role)) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
+        game = new ChessGame();
+        this.ws = new WebSocketFacade("http://localhost:8080");
     }
 
     @Override
@@ -90,8 +94,7 @@ public class GamePlayUI implements UI{
 
     private void refreshGame() {
         try {
-            //call server
-            System.out.println("made it");
+            //game = server.getGame(gameID).game();
         }
         catch (Exception e) {
             System.out.println("Could not refresh game state.");
@@ -108,11 +111,36 @@ public class GamePlayUI implements UI{
     }
 
     private UI leaveGame() {
-        return new PostloginUI(server, auth);
+        try {
+            ws.leave(auth.authToken(), gameID);
+            System.out.println("Leaving game...");
+            isRunning = false;
+            return new PostloginUI(server, auth);
+        } catch (Exception e) {
+            System.out.println("Could not leave game: " + e.getMessage());
+            return null;
+        }
     }
 
     private UI resign() {
-        return null;
+        try {
+            System.out.print("Are you sure you want to resign? (yes/no): ");
+            String response = in.readLine();
+            if (response == null || !response.equalsIgnoreCase("yes")) {
+                System.out.println("Resign cancelled.");
+                return null;
+            }
+
+            ws.resign(auth.authToken(), gameID);
+
+            System.out.println("You resigned.");
+            isRunning = false;
+            return new PostloginUI(server, auth);
+        }
+        catch (Exception e) {
+                System.out.println("Could not resign: " + e.getMessage());
+                return null;
+            }
     }
 
     private void makeMove() {
