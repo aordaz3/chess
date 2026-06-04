@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.javalin.json.JsonMapper;
 import dataaccess.DataAccessException;
+import handler.WebSocketHandler;
 
 import java.lang.reflect.Type;
 
@@ -42,6 +43,15 @@ public class Server {
         javalin.post("/game", ctx -> userHandler.createGame(ctx));
         javalin.put("/game", ctx -> userHandler.joinGame(ctx));
         javalin.delete("/db", ctx -> userHandler.clear(ctx));
+
+        //websoscket
+        WebSocketHandler wsHandler = new WebSocketHandler();
+        javalin.ws("/ws", ws -> {
+            ws.onConnect(wsHandler);
+            ws.onMessage(wsHandler);
+            ws.onClose(wsHandler);
+            ws.onError(wsHandler);
+        });
 
         // Unified Exception Mapper for DataAccessException
         javalin.exception(DataAccessException.class, (e, ctx) -> {
