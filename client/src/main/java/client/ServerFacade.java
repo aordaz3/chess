@@ -98,7 +98,7 @@ public class ServerFacade {
         return gson.fromJson(response.body(), ListGamesResponse.class);
     }
 
-    public void joinGame(int gameId, String playerColor) throws Exception {
+    public GameData joinGame(int gameId, String playerColor) throws Exception {
         JoinGameRequest request = new JoinGameRequest(playerColor, gameId);
 
         HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -110,6 +110,8 @@ public class ServerFacade {
 
         HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         throwIfError(response);
+
+        return gson.fromJson(response.body(), GameData.class);
     }
 
     public void observeGame(int gameId) throws Exception {
@@ -135,11 +137,20 @@ public class ServerFacade {
             throw new Exception("Request failed with status " + code);
         }
 
+        String message = null;
         try {
             ErrorResponse error = gson.fromJson(body, ErrorResponse.class);
-            throw new Exception(error.message());
-        } catch (Exception e) {
-            throw new Exception("Request failed with status " + code);
+            if (error != null) {
+                message = error.message();
+            }
+        } catch (Exception ignored) {
+            // fall through to generic message below
         }
+
+        if (message != null && !message.isBlank()) {
+            throw new Exception(message);
+        }
+
+        throw new Exception("Request failed with status " + code);
     }
 }

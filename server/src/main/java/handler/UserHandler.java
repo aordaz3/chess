@@ -46,8 +46,8 @@ public class UserHandler {
     public void joinGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
         JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
-        userService.joinGame(authToken, request);
-        ctx.status(200).result("{}");
+        GameData game = userService.joinGame(authToken, request);
+        ctx.status(200).json(game);
     }
 
     public void clear(Context ctx) throws DataAccessException {

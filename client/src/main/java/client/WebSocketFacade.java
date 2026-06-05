@@ -5,6 +5,7 @@ import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.MessageHandler;
+import jakarta.websocket.PongMessage;
 import jakarta.websocket.Session;
 import jakarta.websocket.WebSocketContainer;
 import websocket.commands.MakeMoveCommand;
@@ -16,6 +17,10 @@ import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class WebSocketFacade extends Endpoint {
 
@@ -27,9 +32,15 @@ public class WebSocketFacade extends Endpoint {
     }
 
     private final Gson gson = new Gson();
-    private Session session;
     private final String serverUrl;
+
+    private Session session;
     private GameMessageHandler handler;
+
+    private String pendingAuthToken;
+    private Integer pendingGameID;
+
+    private ScheduledExecutorService keepAlive;
 
     public WebSocketFacade(String serverUrl) {
         this.serverUrl = serverUrl;
@@ -37,24 +48,17 @@ public class WebSocketFacade extends Endpoint {
 
     public void connect(String authToken, Integer gameID, GameMessageHandler handler) throws Exception {
         this.handler = handler;
+        this.pendingAuthToken = authToken;
+        this.pendingGameID = gameID;
+
+        if (session != null && session.isOpen()) {
+            close();
+        }
 
         URI uri = new URI(serverUrl.replace("http", "ws") + "/ws");
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        session = container.connectToServer(this, uri);
-
-        session.addMessageHandler(new MessageHandler.Whole<String>() {
-            @Override
-            public void onMessage(String message) {
-                handleMessage(message);
-            }
-        });
-
-        UserGameCommand connect = new UserGameCommand(
-                UserGameCommand.CommandType.CONNECT,
-                authToken,
-                gameID
-        );
-        send(connect);
+        container.setDefaultMaxSessionIdleTimeout(0);
+        container.connectToServer(this, uri);
     }
 
     public void makeMove(String authToken, Integer gameID, chess.ChessMove move) throws IOException {
@@ -89,11 +93,18 @@ public class WebSocketFacade extends Endpoint {
     }
 
     private void handleMessage(String message) {
+        System.out.println("CLIENT RAW WS: " + message);
         try {
             ServerMessage base = gson.fromJson(message, ServerMessage.class);
+            System.out.println("CLIENT TYPE: " + (base == null ? "null" : base.getServerMessageType()));
+
+            if (base == null || base.getServerMessageType() == null) {
+                return;
+            }
 
             switch (base.getServerMessageType()) {
                 case LOAD_GAME -> {
+                    System.out.println("CLIENT LOAD_GAME RECEIVED");
                     LoadGameMessage load = gson.fromJson(message, LoadGameMessage.class);
                     if (handler != null) handler.onLoadGame(load);
                 }
@@ -108,21 +119,74 @@ public class WebSocketFacade extends Endpoint {
             }
         } catch (Exception e) {
             System.out.println("Could not parse websocket message: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     public void close() {
         try {
+            if (keepAlive != null) {
+                keepAlive.shutdownNow();
+                keepAlive = null;
+            }
             if (session != null && session.isOpen()) {
                 session.close();
             }
         } catch (Exception e) {
             System.out.println("Could not close websocket.");
+        } finally {
+            session = null;
         }
     }
 
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
-        //umm
+        System.out.println("CLIENT MESSAGE HANDLER ADDED");
+        this.session = session;
+        session.setMaxIdleTimeout(0);
+
+        session.addMessageHandler((MessageHandler.Whole<String>) this::handleMessage);
+        session.addMessageHandler(PongMessage.class, pong -> {});
+
+        keepAlive = Executors.newSingleThreadScheduledExecutor();
+        keepAlive.scheduleAtFixedRate(() -> {
+            try {
+                if (this.session != null && this.session.isOpen()) {
+                    this.session.getBasicRemote().sendPing(ByteBuffer.allocate(0));
+                }
+            } catch (Exception e) {
+                System.out.println("CLIENT keepalive failed: " + e.getMessage());
+            }
+        }, 15, 15, TimeUnit.SECONDS);
+
+        try {
+            UserGameCommand connect = new UserGameCommand(
+                    UserGameCommand.CommandType.CONNECT,
+                    pendingAuthToken,
+                    pendingGameID
+            );
+            send(connect);
+        } catch (Exception e) {
+            System.out.println("CLIENT failed to send CONNECT: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onClose(Session session, jakarta.websocket.CloseReason closeReason) {
+        if (keepAlive != null) {
+            keepAlive.shutdownNow();
+            keepAlive = null;
+        }
+        this.session = null;
+        if (handler != null) {
+            handler.onClose();
+        }
+    }
+
+    @Override
+    public void onError(Session session, Throwable thr) {
+        System.out.println("CLIENT WS ERROR: " + thr.getMessage());
+        thr.printStackTrace();
     }
 }

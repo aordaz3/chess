@@ -41,13 +41,19 @@ public class GamePlayUI implements UI {
     private volatile ChessGame game;
     private volatile boolean isRunning = true;
     private final ChessGame.TeamColor perspective;
+    private final boolean isObserver;
 
     public GamePlayUI(ServerFacade server, AuthData authdata, Integer gameID, String role) {
+        this(server, authdata, gameID, role, null);
+    }
+    public GamePlayUI(ServerFacade server, AuthData authdata, Integer gameID, String role, ChessGame initialGame) {
         this.server = server;
         this.auth = authdata;
         this.gameID = gameID;
+        this.isObserver = "OBSERVER".equalsIgnoreCase(role);
         this.perspective = "BLACK".equalsIgnoreCase(role) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
         this.ws = new WebSocketFacade("http://localhost:8080");
+        this.game = initialGame;
     }
 
     @Override
@@ -56,6 +62,7 @@ public class GamePlayUI implements UI {
             ws.connect(auth.authToken(), gameID, new WebSocketFacade.GameMessageHandler() {
                 @Override
                 public void onLoadGame(LoadGameMessage message) {
+                    System.out.println("CLIENT GOT LOAD_GAME");
                     game = message.getGame().game();
                     redrawBoard();
                 }
@@ -73,19 +80,22 @@ public class GamePlayUI implements UI {
                 @Override
                 public void onClose() {
                     System.out.println("WebSocket closed.");
+                    isRunning = false;
                 }
             });
         } catch (Exception e) {
             System.out.println("Could not connect to game: " + e.getMessage());
             return new PostloginUI(server, auth);
         }
-
+        if (game != null) {
+            redrawBoard();
+        }
         System.out.println("Connected to game.");
         System.out.println("Type help for commands.");
 
         while (isRunning) {
             try {
-                System.out.print("Enter command or help for hints: ");
+                System.out.print("Enter command or help for hints: \n");
                 String command = in.readLine();
                 if (command == null) {
                     return new PostloginUI(server, auth);
@@ -94,14 +104,22 @@ public class GamePlayUI implements UI {
                 switch (command.toLowerCase()) {
                     case "help" -> showHelp();
                     case "redraw" -> redrawBoard();
-                    case "move" -> makeMove();
                     case "leave" -> {
                         return leaveGame();
                     }
+                    case "move" -> {
+                        if (isObserver) {
+                            System.out.println("Observers cannot make moves.");
+                        } else {
+                            makeMove();
+                        }
+                    }
                     case "resign" -> {
-                        UI next = resign();
-                        if (next != null) {
-                            return next;
+                        if (isObserver) {
+                            System.out.println("Observers cannot resign.");
+                        } else {
+                            UI next = resign();
+                            if (next != null) return next;
                         }
                     }
                     case "highlight" -> highlight();
@@ -223,7 +241,7 @@ public class GamePlayUI implements UI {
         System.out.println("Help: Displays text informing the user what actions they can take.");
         System.out.println("Redraw Chess Board: Redraws the chess board upon request.");
         System.out.println("Leave: Removes you from the game and returns to the post-login screen.");
-        System.out.println("Make Move: Prompts for a move and updates the board.");
+        System.out.println("Move: Prompts for a move and updates the board.");
         System.out.println("Resign: Prompts for confirmation and ends the game if accepted.");
         System.out.println("Highlight Legal Moves: Prompts for a piece and highlights its legal moves.");
         System.out.println();

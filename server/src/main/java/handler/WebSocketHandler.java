@@ -16,25 +16,26 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void clearState() {
         gameWebSocketService.clearState();
     }
-
-
+    // handler/WebSocketHandler.java
     @Override
     public void handleConnect(WsConnectContext ctx) {
-      //ummm
+        System.out.println("WS CONNECT EVENT");
     }
 
     @Override
     public void handleMessage(WsMessageContext ctx) {
+        System.out.println("WS MESSAGE EVENT: " + ctx.message());
         gameWebSocketService.handleMessage(ctx);
     }
 
     @Override
     public void handleClose(WsCloseContext ctx) {
+
         gameWebSocketService.handleClose(ctx);
     }
 
     @Override
     public void handleError(WsErrorContext ctx) {
-        System.out.println("Websocket error: " + ctx.error().getMessage());
+        System.out.println("WS ERROR EVENT: " + ctx.error().getMessage());
     }
 }

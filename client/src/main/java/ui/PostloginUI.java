@@ -123,8 +123,8 @@ public class PostloginUI implements UI {
             }
 
             GamesSummary game = lastListedGames.get(selection - 1);
-            server.joinGame(game.gameID(), color);
-            return new GamePlayUI(server, authData, game.gameID(), color);
+            GameData joinedGame = server.joinGame(game.gameID(), color);
+            return new GamePlayUI(server, authData, game.gameID(), color, joinedGame.game());
         }
         catch (NumberFormatException e) {
             System.out.println("Please enter a valid number.");
@@ -160,7 +160,7 @@ public class PostloginUI implements UI {
 
             int actualGameId = gameList.get(choice - 1).gameID();
             server.observeGame(actualGameId);
-            return new GamePlayUI(server, authData, actualGameId, "WHITE");
+            return new GamePlayUI(server, authData, actualGameId, "OBSERVER");
         }
         catch (Exception e) {
             System.out.println("Observe failed: " + e.getMessage());

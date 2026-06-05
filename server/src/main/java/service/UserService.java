@@ -105,7 +105,7 @@ public class UserService {
         return new CreateGameResult(gameID);
     }
 
-    public void joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
+    public GameData joinGame(String authToken, JoinGameRequest request) throws DataAccessException {
         if (authToken == null || request == null || request.gameID() <= 0 || request.playerColor() == null) {
             throw new DataAccessException("bad request");
         }
@@ -121,25 +121,36 @@ public class UserService {
         }
 
         String color = request.playerColor().toUpperCase();
+        GameData updatedGame;
+
         if (color.equals("WHITE")) {
             if (targetGame.whiteUsername() != null) {
                 throw new DataAccessException("already taken");
             }
-            GameData updateWhite = new GameData(request.gameID(), userAuthData.username(), targetGame.blackUsername(),
-                    targetGame.gameName(), targetGame.game());
-            gameDAO.updateGame(updateWhite);
-            return;
+            updatedGame = new GameData(
+                    request.gameID(),
+                    userAuthData.username(),
+                    targetGame.blackUsername(),
+                    targetGame.gameName(),
+                    targetGame.game()
+            );
         } else if (color.equals("BLACK")) {
             if (targetGame.blackUsername() != null) {
                 throw new DataAccessException("already taken");
             }
-            GameData updatedBlack = new GameData(request.gameID(), targetGame.whiteUsername(), userAuthData.username(),
-                    targetGame.gameName(), targetGame.game());
-            gameDAO.updateGame(updatedBlack);
-            return;
+            updatedGame = new GameData(
+                    request.gameID(),
+                    targetGame.whiteUsername(),
+                    userAuthData.username(),
+                    targetGame.gameName(),
+                    targetGame.game()
+            );
+        } else {
+            throw new DataAccessException("bad request");
         }
 
-        throw new DataAccessException("bad request");
+        gameDAO.updateGame(updatedGame);
+        return updatedGame;
     }
 
     public void clear() throws DataAccessException {
