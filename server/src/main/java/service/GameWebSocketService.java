@@ -64,7 +64,7 @@ public class GameWebSocketService {
         addConnection(gameData.gameID(), auth.username(), ctx);
 
         sendToSender(ctx, new LoadGameMessage(gameData));
-        sendToOthers(gameData.gameID(), ctx, new NotificationMessage(auth.username() + " joined the game."));
+        sendToOthers(gameData.gameID(), auth.username(), new NotificationMessage(""));
     }
 
     private void handleMove(WsMessageContext ctx, MakeMoveCommand command) throws DataAccessException, InvalidMoveException {
@@ -106,18 +106,16 @@ public class GameWebSocketService {
         }
 
         sendToSender(ctx, new LoadGameMessage(updated));
-
-        sendToOthers(gameData.gameID(), ctx, new LoadGameMessage(updated));
-        sendToOthers(gameData.gameID(), ctx, new NotificationMessage(username + " made a move."));
+        sendToOthers(gameData.gameID(), username, new LoadGameMessage(updated));
+        sendToOthers(gameData.gameID(), username, new NotificationMessage(username + " made a move."));
     }
 
     private void handleLeave(WsMessageContext ctx, UserGameCommand command) throws DataAccessException {
         AuthData auth = requireAuth(command.getAuthToken());
         GameData gameData = requireGame(command.getGameID());
 
-        removeConnection(gameData.gameID(), auth.username(), ctx);
-
-        sendToOthers(gameData.gameID(), ctx, new NotificationMessage(auth.username() + " left the game."));
+        removeConnection(gameData.gameID(), auth.username());
+        sendToOthers(gameData.gameID(), auth.username(), new NotificationMessage(auth.username() + " left the game."));
     }
 
     private void handleResign(WsMessageContext ctx, UserGameCommand command) throws DataAccessException {
@@ -182,11 +180,11 @@ public class GameWebSocketService {
                 .add(new Connection(username, ctx));
     }
 
-    private void removeConnection(Integer gameID, String username, WsMessageContext ctx) {
+    private void removeConnection(Integer gameID, String username) {
         Set<Connection> connections = connectionsByGame.get(gameID);
         if (connections == null) return;
 
-        connections.removeIf(c -> c.username().equals(username) && c.ctx() == ctx);
+        connections.removeIf(c -> c.username().equals(username));
 
         if (connections.isEmpty()) {
             connectionsByGame.remove(gameID);
@@ -207,13 +205,13 @@ public class GameWebSocketService {
         }
     }
 
-    private void sendToOthers(Integer gameID, WsMessageContext sender, ServerMessage message) {
+    private void sendToOthers(Integer gameID, String username, ServerMessage message) {
         Set<Connection> connections = connectionsByGame.get(gameID);
         if (connections == null) return;
 
         String json = gson.toJson(message);
         for (Connection c : connections) {
-            if (c.ctx() != sender) {
+            if (!c.username().equals(username)) {
                 c.ctx().send(json);
             }
         }
