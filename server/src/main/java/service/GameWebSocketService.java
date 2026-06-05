@@ -63,8 +63,11 @@ public class GameWebSocketService {
 
         addConnection(gameData.gameID(), auth.username(), ctx);
 
-        sendToSender(ctx, new LoadGameMessage(gameData));
-        sendToOthers(gameData.gameID(), auth.username(), new NotificationMessage(""));
+        String role = getPlayerColor(gameData, auth.username()) == ChessGame.TeamColor.WHITE ? "white" :
+                getPlayerColor(gameData, auth.username()) == ChessGame.TeamColor.BLACK ? "black" : "observer";
+        String msg = role.equals("observer") ? auth.username() + " joined as an observer." : auth.username() + " joined as " + role + ".";
+
+        sendToOthers(gameData.gameID(), auth.username(), new NotificationMessage(msg));
     }
 
     private void handleMove(WsMessageContext ctx, MakeMoveCommand command) throws DataAccessException, InvalidMoveException {
@@ -101,21 +104,43 @@ public class GameWebSocketService {
         // If checkmate, mark game over
         ChessGame.TeamColor opponent = (playerColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
 
-        if (game.isInCheckmate(opponent)) {
-            finishedGames.add(gameData.gameID());
-        }
-
         sendToSender(ctx, new LoadGameMessage(updated));
         sendToOthers(gameData.gameID(), username, new LoadGameMessage(updated));
         sendToOthers(gameData.gameID(), username, new NotificationMessage(username + " made a move."));
+
+        boolean check = game.isInCheck(opponent);
+        boolean checkmate = game.isInCheckmate(opponent);
+        boolean stalemate = game.isInStalemate(opponent);
+
+        if (checkmate || stalemate) {
+            finishedGames.add(gameData.gameID());
+        }
+
+        if (check || checkmate || stalemate) {
+            sendToAll(gameData.gameID(), new NotificationMessage(checkmate ? opponent + " is in checkmate." : stalemate ? opponent + " is in stalemate." : opponent + " is in check."));
+        }
     }
 
     private void handleLeave(WsMessageContext ctx, UserGameCommand command) throws DataAccessException {
         AuthData auth = requireAuth(command.getAuthToken());
         GameData gameData = requireGame(command.getGameID());
 
+        ChessGame.TeamColor color = getPlayerColor(gameData, auth.username());
+        if (color != null) {
+            ChessGame game = gameData.game();
+            GameData updated = new GameData(
+                    gameData.gameID(),
+                    color == ChessGame.TeamColor.WHITE ? null : gameData.whiteUsername(),
+                    color == ChessGame.TeamColor.BLACK ? null : gameData.blackUsername(),
+                    gameData.gameName(),
+                    game
+            );
+            gameDAO.updateGame(updated);
+        }
+
         removeConnection(gameData.gameID(), auth.username());
-        sendToOthers(gameData.gameID(), auth.username(), new NotificationMessage(auth.username() + " left the game."));
+        sendToOthers(gameData.gameID(), auth.username(),
+                new NotificationMessage(auth.username() + " left the game."));
     }
 
     private void handleResign(WsMessageContext ctx, UserGameCommand command) throws DataAccessException {
