@@ -67,6 +67,9 @@ public class GameWebSocketService {
                 getPlayerColor(gameData, auth.username()) == ChessGame.TeamColor.BLACK ? "black" : "observer";
         String msg = role.equals("observer") ? auth.username() + " joined as an observer." : auth.username() + " joined as " + role + ".";
 
+        addConnection(gameData.gameID(), auth.username(), ctx);
+
+        sendToSender(ctx, new LoadGameMessage(gameData));
         sendToOthers(gameData.gameID(), auth.username(), new NotificationMessage(msg));
     }
 
@@ -169,6 +172,11 @@ public class GameWebSocketService {
         } catch (Exception e) {
             System.out.println("Could not send error message: " + e.getMessage());
         }
+    }
+
+    public void clearState() {
+        connectionsByGame.clear();
+        finishedGames.clear();
     }
 
     private AuthData requireAuth(String authToken) throws DataAccessException {

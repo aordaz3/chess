@@ -10,13 +10,13 @@ import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
 import service.GameWebSocketService;
 
-public class WebSocketHandler implements
-        WsConnectHandler,
-        WsMessageHandler,
-        WsCloseHandler,
-        WsErrorHandler {
-
+public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsCloseHandler, WsErrorHandler {
     private final GameWebSocketService gameWebSocketService = new GameWebSocketService();
+
+    public void clearState() {
+        gameWebSocketService.clearState();
+    }
+
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
