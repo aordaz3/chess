@@ -142,34 +142,29 @@ public class WebSocketFacade extends Endpoint {
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
         System.out.println("CLIENT MESSAGE HANDLER ADDED");
+        System.out.println("WS class from: " + WebSocketFacade.class.getProtectionDomain().getCodeSource().getLocation());
+
         this.session = session;
-        session.setMaxIdleTimeout(0);
-
-        session.addMessageHandler((MessageHandler.Whole<String>) this::handleMessage);
-        session.addMessageHandler(PongMessage.class, pong -> {});
-
-        keepAlive = Executors.newSingleThreadScheduledExecutor();
-        keepAlive.scheduleAtFixedRate(() -> {
-            try {
-                if (this.session != null && this.session.isOpen()) {
-                    this.session.getBasicRemote().sendPing(ByteBuffer.allocate(0));
-                }
-            } catch (Exception e) {
-                System.out.println("CLIENT keepalive failed: " + e.getMessage());
+        session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(String message) {
+                handleMessage(message);
             }
-        }, 15, 15, TimeUnit.SECONDS);
+        });
 
-        try {
-            UserGameCommand connect = new UserGameCommand(
-                    UserGameCommand.CommandType.CONNECT,
-                    pendingAuthToken,
-                    pendingGameID
-            );
-            send(connect);
-        } catch (Exception e) {
-            System.out.println("CLIENT failed to send CONNECT: " + e.getMessage());
-            e.printStackTrace();
-        }
+        new Thread(() -> {
+            try {
+                UserGameCommand connect = new UserGameCommand(
+                        UserGameCommand.CommandType.CONNECT,
+                        pendingAuthToken,
+                        pendingGameID
+                );
+                send(connect);
+            } catch (Exception e) {
+                System.out.println("CLIENT failed to send CONNECT: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     @Override
