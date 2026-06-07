@@ -94,45 +94,61 @@ public class GamePlayUI implements UI {
         System.out.println("Type help for commands.");
 
         while (isRunning) {
-            try {
-                System.out.print("Enter command or help for hints: \n");
-                String command = in.readLine();
-                if (command == null) {
-                    return new PostloginUI(server, auth);
-                }
-
-                switch (command.toLowerCase()) {
-                    case "help" -> showHelp();
-                    case "redraw" -> redrawBoard();
-                    case "leave" -> {
-                        return leaveGame();
-                    }
-                    case "move" -> {
-                        if (isObserver) {
-                            System.out.println("Observers cannot make moves.");
-                        } else {
-                            makeMove();
-                        }
-                    }
-                    case "resign" -> {
-                        if (isObserver) {
-                            System.out.println("Observers cannot resign.");
-                        } else {
-                            UI next = resign();
-                            if (next != null) return next;
-                        }
-                    }
-                    case "highlight" -> highlight();
-                    default -> System.out.println("Unknown command");
-                }
-            } catch (Exception e) {
-                System.out.println("Error reading input.");
+            if (!handleCommand()) {
+                return new PostloginUI(server, auth);
             }
         }
-
         return new PostloginUI(server, auth);
     }
 
+    private boolean handleCommand() {
+        try {
+            System.out.print("Enter command or help for hints: \n");
+            String command = in.readLine();
+
+            if (command == null) {
+                return false;
+            }
+
+            switch (command.toLowerCase()) {
+                case "help" -> showHelp();
+                case "redraw" -> redrawBoard();
+                case "leave" -> {
+                    leaveGame();
+                    return false;
+                }
+                case "move" -> helperMove();
+                case "resign" -> {
+                    UI next = helperResign();
+                    if (next != null) {return false;}
+                }
+                case "highlight" -> highlight();
+                default -> System.out.println("Unknown command");
+            }
+
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error reading input.");
+            return true;
+        }
+    }
+
+    private UI helperResign() {
+        if (isObserver) {
+            System.out.println("Observers cannot resign.");
+            return null;
+        }
+
+        return resign();
+    }
+    private void helperMove() {
+        if (isObserver) {
+            System.out.println("Observers cannot make moves.");
+            return;
+        }
+
+        makeMove();
+    }
     private UI leaveGame() {
         try {
             ws.leave(auth.authToken(), gameID);

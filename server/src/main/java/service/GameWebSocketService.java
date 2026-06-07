@@ -142,7 +142,8 @@ public class GameWebSocketService {
         }
 
         if (check || checkmate || stalemate) {
-            sendToAll(gameData.gameID(), new NotificationMessage(checkmate ? opponent + " is in checkmate." : stalemate ? opponent + " is in stalemate." : opponent + " is in check."));
+            sendToAll(gameData.gameID(), new NotificationMessage(checkmate ?
+                    opponent + " is in checkmate." : stalemate ? opponent + " is in stalemate." : opponent + " is in check."));
         }
     }
 
@@ -183,7 +184,6 @@ public class GameWebSocketService {
 
         finishedGames.add(gameData.gameID());
 
-        // Everybody in the game gets a notification, including sender
         sendToAll(gameData.gameID(),
                 new NotificationMessage(auth.username() + " resigned the game."));
     }
@@ -224,9 +224,15 @@ public class GameWebSocketService {
     }
 
     private ChessGame.TeamColor getPlayerColor(GameData gameData, String username) {
-        if (username == null) return null;
-        if (username.equals(gameData.whiteUsername())) return ChessGame.TeamColor.WHITE;
-        if (username.equals(gameData.blackUsername())) return ChessGame.TeamColor.BLACK;
+        if (username == null) {
+            return null;
+        }
+        if (username.equals(gameData.whiteUsername())){
+            return ChessGame.TeamColor.WHITE;
+        }
+        if (username.equals(gameData.blackUsername())){
+            return ChessGame.TeamColor.BLACK;
+        }
         return null;
     }
 
@@ -237,7 +243,9 @@ public class GameWebSocketService {
 
     private void removeConnection(Integer gameID, String username) {
         Set<Connection> connections = connectionsByGame.get(gameID);
-        if (connections == null) return;
+        if (connections == null){
+            return;
+        }
 
         connections.removeIf(c -> c.username().equals(username));
 
@@ -258,7 +266,9 @@ public class GameWebSocketService {
 
         System.out.println("SEND TO ALL: " + json);
         Set<Connection> connections = connectionsByGame.get(gameID);
-        if (connections == null) return;
+        if (connections == null){
+            return;
+        }
         for (Connection c : connections) {
             c.ctx().send(json);
         }
@@ -266,7 +276,9 @@ public class GameWebSocketService {
 
     private void sendToOthers(Integer gameID, String username, ServerMessage message) {
         Set<Connection> connections = connectionsByGame.get(gameID);
-        if (connections == null) return;
+        if (connections == null){
+            return;
+        }
 
         String json = gson.toJson(message);
         for (Connection c : connections) {

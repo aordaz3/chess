@@ -32,9 +32,8 @@ public class WebSocketFacade extends Endpoint {
     }
 
     private final Gson gson = new Gson();
-    private final String serverUrl;
-
     private Session session;
+    private final String serverUrl;
     private GameMessageHandler handler;
 
     private String pendingAuthToken;
@@ -50,10 +49,6 @@ public class WebSocketFacade extends Endpoint {
         this.handler = handler;
         this.pendingAuthToken = authToken;
         this.pendingGameID = gameID;
-
-        if (session != null && session.isOpen()) {
-            close();
-        }
 
         URI uri = new URI(serverUrl.replace("http", "ws") + "/ws");
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -106,15 +101,15 @@ public class WebSocketFacade extends Endpoint {
                 case LOAD_GAME -> {
                     System.out.println("CLIENT LOAD_GAME RECEIVED");
                     LoadGameMessage load = gson.fromJson(message, LoadGameMessage.class);
-                    if (handler != null) handler.onLoadGame(load);
+                    if (handler != null) {handler.onLoadGame(load);}
                 }
                 case NOTIFICATION -> {
                     NotificationMessage note = gson.fromJson(message, NotificationMessage.class);
-                    if (handler != null) handler.onNotification(note);
+                    if (handler != null) {handler.onNotification(note);}
                 }
                 case ERROR -> {
                     ErrorMessage err = gson.fromJson(message, ErrorMessage.class);
-                    if (handler != null) handler.onError(err);
+                    if (handler != null) {handler.onError(err);}
                 }
             }
         } catch (Exception e) {
@@ -142,15 +137,28 @@ public class WebSocketFacade extends Endpoint {
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
         System.out.println("CLIENT MESSAGE HANDLER ADDED");
-        System.out.println("WS class from: " + WebSocketFacade.class.getProtectionDomain().getCodeSource().getLocation());
-
         this.session = session;
+        session.setMaxIdleTimeout(0);
+
         session.addMessageHandler(new MessageHandler.Whole<String>() {
             @Override
             public void onMessage(String message) {
                 handleMessage(message);
             }
         });
+
+        session.addMessageHandler(PongMessage.class, pong -> {});
+
+        keepAlive = Executors.newSingleThreadScheduledExecutor();
+        keepAlive.scheduleAtFixedRate(() -> {
+            try {
+                if (this.session != null && this.session.isOpen()) {
+                    this.session.getBasicRemote().sendPing(ByteBuffer.allocate(0));
+                }
+            } catch (Exception e) {
+                System.out.println("CLIENT keepalive failed: " + e.getMessage());
+            }
+        }, 10, 10, TimeUnit.SECONDS);
 
         new Thread(() -> {
             try {
