@@ -88,10 +88,10 @@ public class WebSocketFacade extends Endpoint {
     }
 
     private void handleMessage(String message) {
-        System.out.println("CLIENT RAW WS: " + message);
+        //System.out.println("CLIENT RAW WS: " + message);
         try {
             ServerMessage base = gson.fromJson(message, ServerMessage.class);
-            System.out.println("CLIENT TYPE: " + (base == null ? "null" : base.getServerMessageType()));
+            //System.out.println("CLIENT TYPE: " + (base == null ? "null" : base.getServerMessageType()));
 
             if (base == null || base.getServerMessageType() == null) {
                 return;
@@ -99,7 +99,6 @@ public class WebSocketFacade extends Endpoint {
 
             switch (base.getServerMessageType()) {
                 case LOAD_GAME -> {
-                    System.out.println("CLIENT LOAD_GAME RECEIVED");
                     LoadGameMessage load = gson.fromJson(message, LoadGameMessage.class);
                     if (handler != null) {handler.onLoadGame(load);}
                 }
@@ -136,7 +135,6 @@ public class WebSocketFacade extends Endpoint {
 
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
-        System.out.println("CLIENT MESSAGE HANDLER ADDED");
         this.session = session;
         session.setMaxIdleTimeout(0);
 
@@ -156,7 +154,7 @@ public class WebSocketFacade extends Endpoint {
                     this.session.getBasicRemote().sendPing(ByteBuffer.allocate(0));
                 }
             } catch (Exception e) {
-                System.out.println("CLIENT keepalive failed: " + e.getMessage());
+                System.out.println("CLIENT failed: " + e.getMessage());
             }
         }, 10, 10, TimeUnit.SECONDS);
 

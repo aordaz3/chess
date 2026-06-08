@@ -69,7 +69,7 @@ public class GamePlayUI implements UI {
             ws.connect(auth.authToken(), gameID, new WebSocketFacade.GameMessageHandler() {
                 @Override
                 public void onLoadGame(LoadGameMessage message) {
-                    System.out.println("CLIENT GOT LOAD_GAME");
+                    //System.out.println("CLIENT GOT LOAD_GAME");
                     game = message.getGame().game();
                     redrawBoard();
                 }
@@ -86,7 +86,7 @@ public class GamePlayUI implements UI {
 
                 @Override
                 public void onClose() {
-                    System.out.println("WebSocket closed.");
+                    //System.out.println("WebSocket closed.");
                     isRunning = false;
                 }
             });
@@ -97,8 +97,7 @@ public class GamePlayUI implements UI {
         if (game != null) {
             redrawBoard();
         }
-        System.out.println("Connected to game.");
-        System.out.println("Type help for commands.");
+        //System.out.println("Connected to game.");
 
         while (isRunning) {
             if (!handleCommand()) {
@@ -145,7 +144,6 @@ public class GamePlayUI implements UI {
             System.out.println("Observers cannot resign.");
             return null;
         }
-
         return resign();
     }
     private void helperMove() {
@@ -153,7 +151,6 @@ public class GamePlayUI implements UI {
             System.out.println("Observers cannot make moves.");
             return;
         }
-
         makeMove();
     }
     private UI leaveGame() {
@@ -296,7 +293,6 @@ public class GamePlayUI implements UI {
 
     private void showHelp() {
         System.out.println();
-        System.out.println("Help");
         System.out.println("----");
         System.out.println("Help: Displays text informing the user what actions they can take.");
         System.out.println("Redraw Chess Board: Redraws the chess board upon request.");

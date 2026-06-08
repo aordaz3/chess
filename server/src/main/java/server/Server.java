@@ -47,7 +47,7 @@ public class Server {
         //websoscket
         WebSocketHandler wsHandler = new WebSocketHandler();
         // Server.java, inside the ws registration
-        System.out.println("REGISTERING WS ROUTE");
+        //System.out.println("REGISTERING WS ROUTE");
         javalin.ws("/ws", ws -> {
             System.out.println("WS ROUTE ACTIVE");
             ws.onConnect(wsHandler);
@@ -55,7 +55,7 @@ public class Server {
             ws.onClose(wsHandler);
             ws.onError(wsHandler);
         });
-        System.out.println("WS ROUTE REGISTERED");
+        //System.out.println("WS ROUTE REGISTERED");
         // Unified Exception Mapper for DataAccessException
         javalin.exception(DataAccessException.class, (e, ctx) -> {
             String msg = e.getMessage();

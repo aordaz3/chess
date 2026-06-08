@@ -36,10 +36,10 @@ public class GameWebSocketService {
     public void handleMessage(WsMessageContext ctx) {
         try {
             String json = ctx.message();
-            System.out.println("SERVICE GOT: " + json);
+            //System.out.println("SERVICE GOT: " + json);
 
             UserGameCommand base = gson.fromJson(json, UserGameCommand.class);
-            System.out.println("BASE TYPE: " + (base == null ? "null" : base.getCommandType()));
+            //System.out.println("BASE TYPE: " + (base == null ? "null" : base.getCommandType()));
 
             if (base == null || base.getCommandType() == null) {
                 sendError(ctx, "Error: invalid websocket command");
@@ -63,16 +63,16 @@ public class GameWebSocketService {
     }
 
     private void handleConnect(WsMessageContext ctx, UserGameCommand command) throws DataAccessException {
-        System.out.println("HANDLE CONNECT START");
-        System.out.println("AUTH TOKEN = " + command.getAuthToken());
-        System.out.println("GAME ID = " + command.getGameID());
+        //System.out.println("HANDLE CONNECT START");
+        //System.out.println("AUTH TOKEN = " + command.getAuthToken());
+        //System.out.println("GAME ID = " + command.getGameID());
 
         AuthData auth = requireAuth(command.getAuthToken());
-        System.out.println("AUTH OK = " + auth.username());
+        //System.out.println("AUTH OK = " + auth.username());
 
         GameData gameData = requireGame(command.getGameID());
-        System.out.println("GAME OK = " + gameData.gameID());
-        System.out.println("GAME OBJ = " + gameData.game());
+        //System.out.println("GAME OK = " + gameData.gameID());
+        //System.out.println("GAME OBJ = " + gameData.game());
 
         ChessGame.TeamColor playerColor = getPlayerColor(gameData, auth.username());
 
@@ -86,10 +86,10 @@ public class GameWebSocketService {
                 : playerColor == ChessGame.TeamColor.BLACK ? "black"
                   : "observer";
 
-        System.out.println("ROLE = " + role);
+        //System.out.println("ROLE = " + role);
 
         sendToSender(ctx, new LoadGameMessage(gameData));
-        System.out.println("LOAD_GAME SENT");
+        //System.out.println("LOAD_GAME SENT");
 
         if (!"observer".equals(role)) {
             sendToOthers(gameData.gameID(), auth.username(),
@@ -133,7 +133,7 @@ public class GameWebSocketService {
 
         // If checkmate, mark game over
         ChessGame.TeamColor opponent = (playerColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-        System.out.println("SERVER SENDING UPDATED BOARD");
+        //System.out.println("SERVER SENDING UPDATED BOARD");
         sendToSender(ctx, new LoadGameMessage(updated));
         sendToOthers(gameData.gameID(), username, new LoadGameMessage(updated));
         sendToOthers(gameData.gameID(), username, new NotificationMessage(username + " made a move."));
@@ -261,7 +261,7 @@ public class GameWebSocketService {
 
     private void sendToSender(WsMessageContext ctx, ServerMessage message) {
         String json = gson.toJson(message);
-        System.out.println("SEND TO SENDER: " + json);
+        //System.out.println("SEND TO SENDER: " + json);
         ctx.send(json);
     }
 
@@ -269,7 +269,7 @@ public class GameWebSocketService {
 
         String json = gson.toJson(message);
 
-        System.out.println("SEND TO ALL: " + json);
+        //System.out.println("SEND TO ALL: " + json);
         Set<Connection> connections = connectionsByGame.get(gameID);
         if (connections == null){
             return;
