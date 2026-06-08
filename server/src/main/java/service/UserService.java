@@ -100,7 +100,7 @@ public class UserService {
         int gameID = Math.abs((request.gameName() + System.currentTimeMillis()).hashCode());
         ChessGame game = new ChessGame();
 
-        GameData gameInfo = new GameData(gameID, null, null, request.gameName(), game);
+        GameData gameInfo = new GameData(gameID, null, null, request.gameName(), game, false);
         gameDAO.createGame(gameID, gameInfo);
         return new CreateGameResult(gameID);
     }
@@ -119,7 +119,9 @@ public class UserService {
         if (targetGame == null) {
             throw new DataAccessException("bad request");
         }
-
+        if (targetGame.gameOver()) {
+            throw new DataAccessException("game already over");
+        }
         String color = request.playerColor().toUpperCase();
         GameData updatedGame;
 
@@ -132,7 +134,8 @@ public class UserService {
                     userAuthData.username(),
                     targetGame.blackUsername(),
                     targetGame.gameName(),
-                    targetGame.game()
+                    targetGame.game(),
+                    false
             );
         } else if (color.equals("BLACK")) {
             if (targetGame.blackUsername() != null) {
@@ -143,7 +146,8 @@ public class UserService {
                     targetGame.whiteUsername(),
                     userAuthData.username(),
                     targetGame.gameName(),
-                    targetGame.game()
+                    targetGame.game(),
+                    false
             );
         } else {
             throw new DataAccessException("bad request");

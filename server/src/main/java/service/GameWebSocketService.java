@@ -2,6 +2,7 @@ package service;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPosition;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataaccess.*;
@@ -128,15 +129,22 @@ public class GameWebSocketService {
         game.makeMove(move);
 
         // Save updated game back to DB
-        GameData updated = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game);
+        GameData updated = new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game, false);
         gameDAO.updateGame(updated);
 
         // If checkmate, mark game over
-        ChessGame.TeamColor opponent = (playerColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-        //System.out.println("SERVER SENDING UPDATED BOARD");
+        ChessGame.TeamColor opponent =
+                (playerColor == ChessGame.TeamColor.WHITE)
+                        ? ChessGame.TeamColor.BLACK
+                        : ChessGame.TeamColor.WHITE;
+
+        String moverName = username;
+        String opponentName = usernameForColor(gameData, opponent);
+
         sendToSender(ctx, new LoadGameMessage(updated));
         sendToOthers(gameData.gameID(), username, new LoadGameMessage(updated));
-        sendToOthers(gameData.gameID(), username, new NotificationMessage(username + " made a move."));
+
+        sendToOthers(gameData.gameID(), username, new NotificationMessage(moverName + " moved to " + square(move.getEndPosition()) + "."));
 
         boolean check = game.isInCheck(opponent);
         boolean checkmate = game.isInCheckmate(opponent);
@@ -146,9 +154,15 @@ public class GameWebSocketService {
             finishedGames.add(gameData.gameID());
         }
 
-        if (check || checkmate || stalemate) {
-            sendToAll(gameData.gameID(), new NotificationMessage(checkmate ?
-                    opponent + " is in checkmate." : stalemate ? opponent + " is in stalemate." : opponent + " is in check."));
+        if (checkmate) {
+            sendToAll(gameData.gameID(),
+                    new NotificationMessage(opponentName + " is in checkmate."));
+        } else if (stalemate) {
+            sendToAll(gameData.gameID(),
+                    new NotificationMessage(opponentName + " is in stalemate."));
+        } else if (check) {
+            sendToAll(gameData.gameID(),
+                    new NotificationMessage(opponentName + " is in check."));
         }
     }
 
@@ -164,7 +178,8 @@ public class GameWebSocketService {
                     color == ChessGame.TeamColor.WHITE ? null : gameData.whiteUsername(),
                     color == ChessGame.TeamColor.BLACK ? null : gameData.blackUsername(),
                     gameData.gameName(),
-                    game
+                    game,
+                    gameData.gameOver()
             );
             gameDAO.updateGame(updated);
         }
@@ -292,4 +307,16 @@ public class GameWebSocketService {
             }
         }
     }
+
+    private String square(ChessPosition pos) {
+        char file = (char) ('a' + pos.getColumn() - 1);
+        return "" + file + pos.getRow();
+    }
+
+    private String usernameForColor(GameData gameData, ChessGame.TeamColor color) {
+        return color == ChessGame.TeamColor.WHITE
+                ? gameData.whiteUsername()
+                : gameData.blackUsername();
+    }
+
 }
