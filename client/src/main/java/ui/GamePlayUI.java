@@ -12,9 +12,16 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import static ui.EscapeSequences.*;
 
 public class GamePlayUI implements UI {
+    private static final String HIGHLIGHT_BG = "\u001B[43m";
+    private static final String HIGHLIGHT_TEXT = "\u001B[30m";
+
     private static final int BOARD_SIZE_IN_SQUARES = 8;
     private static final String EMPTY = "   ";
 
@@ -170,6 +177,7 @@ public class GamePlayUI implements UI {
             }
 
             ws.resign(auth.authToken(), gameID);
+            ws.close();
             isRunning = false;
             return new PostloginUI(server, auth);
         } catch (Exception e) {
@@ -214,7 +222,43 @@ public class GamePlayUI implements UI {
     }
 
     private void highlight() {
-        System.out.println("Highlight is not implemented yet.");
+        try {
+            if (game == null || game.getBoard() == null) {
+                System.out.println("Game is not loaded yet.");
+                return;
+            }
+
+            System.out.print("Piece square (example: e2): ");
+            String square = in.readLine();
+            ChessPosition start = parsePosition(square);
+
+            if (start == null) {
+                System.out.println("Invalid square.");
+                return;
+            }
+
+            ChessPiece piece = game.getBoard().getPiece(start);
+            if (piece == null) {
+                System.out.println("There is no piece on that square.");
+                return;
+            }
+
+            Collection<ChessMove> moves = game.validMoves(start);
+            if (moves.isEmpty()) {
+                System.out.println("That piece has no legal moves.");
+                return;
+            }
+
+            Set<ChessPosition> highlights = new HashSet<>();
+            highlights.add(start);
+            for (ChessMove move : moves) {
+                highlights.add(move.getEndPosition());
+            }
+
+            redrawBoard(highlights);
+        } catch (Exception e) {
+            System.out.println("Could not highlight moves: " + e.getMessage());
+        }
     }
 
     private ChessPosition parsePosition(String square) {
@@ -264,18 +308,24 @@ public class GamePlayUI implements UI {
     }
 
     private void redrawBoard() {
+        redrawBoard(Set.of());
+    }
+
+    private void redrawBoard(Set<ChessPosition> highlights) {
         if (game == null || game.getBoard() == null) {
             System.out.println("No game board available yet.");
             return;
         }
-        drawChessBoard(System.out, game.getBoard(), perspective);
+        drawChessBoard(System.out, game.getBoard(), perspective, highlights);
     }
 
-    private static void drawChessBoard(PrintStream out, ChessBoard board, ChessGame.TeamColor perspective) {
+    private static void drawChessBoard(PrintStream out, ChessBoard board,
+                                       ChessGame.TeamColor perspective,
+                                       Set<ChessPosition> highlights) {
         drawColumnLabels(out, perspective);
 
         for (int boardRow = 0; boardRow < BOARD_SIZE_IN_SQUARES; boardRow++) {
-            drawRow(out, board, boardRow, perspective);
+            drawRow(out, board, boardRow, perspective, highlights);
         }
 
         drawColumnLabels(out, perspective);
@@ -295,7 +345,9 @@ public class GamePlayUI implements UI {
         out.println();
     }
 
-    private static void drawRow(PrintStream out, ChessBoard board, int boardRow, ChessGame.TeamColor perspective) {
+    private static void drawRow(PrintStream out, ChessBoard board, int boardRow,
+                                ChessGame.TeamColor perspective,
+                                Set<ChessPosition> highlights) {
         int chessRow = (perspective == ChessGame.TeamColor.WHITE) ? 8 - boardRow : boardRow + 1;
 
         out.print(RESET_BG_COLOR);
@@ -304,9 +356,14 @@ public class GamePlayUI implements UI {
 
         for (int col = 0; col < BOARD_SIZE_IN_SQUARES; col++) {
             int boardCol = (perspective == ChessGame.TeamColor.WHITE) ? col : 7 - col;
+            ChessPosition pos = new ChessPosition(chessRow, boardCol + 1);
+            boolean highlighted = highlights != null && highlights.contains(pos);
             boolean isWhiteSquare = (boardRow + col) % 2 == 0;
 
-            if (isWhiteSquare) {
+            if (highlighted) {
+                out.print(HIGHLIGHT_BG);
+                out.print(HIGHLIGHT_TEXT);
+            } else if (isWhiteSquare) {
                 out.print(SET_BG_COLOR_WHITE);
                 out.print(SET_TEXT_COLOR_WHITE);
             } else {
@@ -314,8 +371,7 @@ public class GamePlayUI implements UI {
                 out.print(SET_TEXT_COLOR_BLACK);
             }
 
-            ChessPiece piece = board.getPiece(new ChessPosition(chessRow, boardCol + 1));
-
+            ChessPiece piece = board.getPiece(pos);
             if (piece == null) {
                 out.print(EMPTY);
             } else {

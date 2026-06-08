@@ -74,9 +74,14 @@ public class GameWebSocketService {
         System.out.println("GAME OK = " + gameData.gameID());
         System.out.println("GAME OBJ = " + gameData.game());
 
+        ChessGame.TeamColor playerColor = getPlayerColor(gameData, auth.username());
+
+        if (finishedGames.contains(gameData.gameID()) && playerColor != null) {
+            throw new DataAccessException("game already over");
+        }
+
         addConnection(gameData.gameID(), auth.username(), ctx);
 
-        ChessGame.TeamColor playerColor = getPlayerColor(gameData, auth.username());
         String role = playerColor == ChessGame.TeamColor.WHITE ? "white"
                 : playerColor == ChessGame.TeamColor.BLACK ? "black"
                   : "observer";
