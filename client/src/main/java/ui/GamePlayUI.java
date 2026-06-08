@@ -94,9 +94,7 @@ public class GamePlayUI implements UI {
             System.out.println("Could not connect to game: " + e.getMessage());
             return new PostloginUI(server, auth);
         }
-        if (game != null) {
-            redrawBoard();
-        }
+
         //System.out.println("Connected to game.");
 
         while (isRunning) {
